@@ -1,0 +1,8 @@
+data/spatial_data/*
+literature/
+data/ATPU trend Atlantic Region up to 2023/
+code/map scripts that SarahG wrote/
+*.rds
+*.docx
+*.doc
+.Rhistory

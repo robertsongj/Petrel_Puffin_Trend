@@ -1,0 +1,62 @@
+model {
+
+
+# priors on N parameters
+
+## fixed effects
+    for(i in 2:Nbetas){beta[i] ~  dnorm(0, 0.001)}
+    beta[1] ~ dnorm(12, 0.001)
+
+## random slopes across colonies
+    for (j in 1:Nre) {b.slope[j] ~ dnorm(0, tau.trend)}
+    tau.trend <- 1 / (sigma.trend * sigma.trend)
+    sigma.trend ~ dt(0, pow(5, -2), 4)T(0,)
+    
+# constraint on Nhat / observation process
+
+for (t in 1:N){
+
+ #  N[Nhatyears[t]] ~ dnorm(Nhat[t], pow(sd[t], -2))
+    Nhat[t] ~ dnorm(Npred[t], pow(sd[t], -2))
+
+# can't calculate a variable and then call it from a distribution
+# either need an intermediate step (ystar or Poisson)
+# or use the 'backwards' notation
+
+}
+
+# process of N
+
+for(i in 1:N){
+    Npred[i] ~ dpois(lambda[i])
+    log(lambda[i]) <- inprod(beta[], X[i,]) + b.slope[pop[i]] * X[i,2] 
+}
+
+# priors on CV parameteres
+
+shape ~ dunif(0,100)
+betaCV[1] ~ dnorm(0,000.1)
+betaCV[2] ~ dnorm(0,000.1)
+
+# process of CV
+
+for(i in 1:N){
+
+	sd[i] <- CV[i] * obsN[i]
+	CV[i] ~ dgamma(shape, shape / exp(lpCV[i]))
+	lpCV[i] <- betaCV[1] + betaCV[2] * log(obsN[i])
+}
+
+## values for plotting - overall trend line centered on Green Island
+
+    for(years in 1:Npreds){
+        
+      preds[years] ~ dpois(predlambda[years])
+      log(predlambda[years]) <- inprod(beta[], XT[years,]) 
+    
+    }
+
+
+}
+
+
