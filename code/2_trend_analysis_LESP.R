@@ -219,6 +219,9 @@ dev.off()
 # Do they track the 1:1 line?
 # ----------------------------------
 
+# Estimates of SE for each survey (fills in missing ones)
+spdat$SE_est = out$mean$survey_SE
+
 # Extract predictions of annual indices in dataframe format
 fit_samples_colony = reshape2::melt(out$sims.list$population_index) %>%
   rename(samp = Var1, year_numeric = Var2, colony_numeric = Var3, N_pred = value) %>%
@@ -236,16 +239,18 @@ annual_summary_colony = fit_samples_colony %>%
 annual_summary_colony <- annual_summary_colony %>% full_join(spdat)
 
 ObsPredPlot <- ggplot(annual_summary_colony, 
-       aes(x = Count, y = q50, ymin = q025, ymax = q975, 
+       aes(x = Count, xmin = Count - 1.96*SE_est, xmax = Count + 1.96*SE_est, 
+           y = q50, ymin = q025, ymax = q975, 
            col = Colony))+
   geom_abline(slope = 1, intercept = 0)+
   geom_point()+
   geom_errorbar(width=0)+
+  geom_errorbarh(height=0)+
   xlab("Observed Count")+
   ylab("Estimated Population Index")+
   scale_y_continuous(trans="log10", labels = comma)+
   scale_x_continuous(trans="log10", labels = comma)+
-  ggtitle("Predicted annual indices vs observed counts\n\n(Note logarithmic axes)")
+  ggtitle("Predicted annual indices vs observed counts\n\n(Note that axes are on a log scale)")
 
 ObsPredPlot
 
@@ -265,9 +270,6 @@ dev.off()
 fit_samples_colony = reshape2::melt(out$sims.list$population_index) %>%
   rename(samp = Var1, year_numeric = Var2, colony_numeric = Var3, N_pred = value) %>%
   full_join(colony_name_table) %>% full_join(year_table)
-
-# Estimates of SE for each survey (fills in missing ones)
-spdat$SE_est = out$mean$survey_SE
 
 annual_summary_colony = fit_samples_colony %>% 
   group_by(Colony, Year) %>%
@@ -332,7 +334,6 @@ colony_trajectory_plot
 png(paste0("output/figures/trajectory_and_trend_plots/LESP_trajectory_colony.png"), width = 12, height = 6, units = "in", res = 600)
 print(colony_trajectory_plot)
 dev.off()
-
 
 # ----------------------------------
 # Plot regional trajectory
