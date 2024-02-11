@@ -86,7 +86,8 @@ model {
     survey_SE[i] ~ dlnorm(intercept_SE + slope_SE * log(survey_count[i]),tau_SE)
     survey_tau[i] <- pow(survey_SE[i],-2)
     
-    lambda_count[i] ~ dnorm(exp(log_mu[year[i],colony[i]]), survey_tau[i])    
+    # Assume lambda is lognormally distributed
+    lambda_count[i] ~ dnorm(exp(log_mu[year[i],colony[i]]), survey_tau[i])T(0,)   
     count[i] ~ dpois(lambda_count[i])                     
   }
   
@@ -109,11 +110,12 @@ model {
   for (i in 1:ncounts) { 
     
     # Simulate new lambda and new counts under fitted model
-    simulated_lambda[i] ~ dnorm(exp(log_mu[year[i],colony[i]]), survey_tau[i])    
-
+    simulated_lambda_count[i] ~ dnorm(exp(log_mu[year[i],colony[i]]), survey_tau[i])T(0,)    
+    simulated_count[i] ~ dpois(simulated_lambda_count[i]) 
+     
     # Calculate discrepancy measures (squared error) for actual and simulated data
-    sqE_actual[i] <- pow(lambda_count[i] - population_index[year[i],colony[i]] ,2)
-    sqE_simulated[i] <- pow(simulated_lambda[i] - population_index[year[i],colony[i]],2)
+    sqE_actual[i] <- pow(count[i] - population_index[year[i],colony[i]] ,2)
+    sqE_simulated[i] <- pow(simulated_count[i] - population_index[year[i],colony[i]],2)
      
       
   }

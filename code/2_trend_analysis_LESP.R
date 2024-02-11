@@ -175,6 +175,7 @@ out$mcmc.info$elapsed.mins
 # ************************************************
 
 # Which parameters have not converged?
+unlist(out$Rhat)[which(unlist(out$Rhat)>1.1)]
 
 # Which parameters have effective sample sizes less than 1000?
 n.eff <- unlist(out$n.eff)
@@ -182,13 +183,13 @@ n.eff <- n.eff[-which(n.eff == 1)]
 n.eff[which(n.eff < 1000)]
 
 # ************************************************
-# Goodness-of-fit assessment
+# Goodness-of-fit assessments
 # ************************************************
 
 # ~Posterior predictive check~
 # Calculate Bayesian p-value by comparing discrepancy measures from simulated datasets
 # under a 'perfectly specified model' to discrepancy measures from the empirical data
-# (Note: Bayesian p-values close to 0.5 imply that the model fits the data reasonably well
+# (Note: Bayesian p-values close between 0.3 and 0.7 imply that the model fits the data reasonably well
 #  i.e., it produces simulated datasets that "look like" the empirical dataset)
 
 Bayesian_pval <- mean(out$sims.list$RMSE_actual > out$sims.list$RMSE_simulated) %>% round(2)
@@ -196,17 +197,61 @@ Bayesian_pval <- mean(out$sims.list$RMSE_actual > out$sims.list$RMSE_simulated) 
 # Plot results of Posterior predictive check: We want to see values clustered along the 1:1 line
 lim <- range(c(out$sims.list$RMSE_actual,out$sims.list$RMSE_simulated))
 RMSE_df = data.frame(actual = out$sims.list$RMSE_actual, simulated = out$sims.list$RMSE_simulated)
-plot1 <- ggplot(data = RMSE_df,
+PostPredCheckPlot <- ggplot(data = RMSE_df,
                 aes(x = actual, y = simulated )) +
   geom_hex(binwidth = diff(lim)/50) +
   scale_fill_gradientn(colors = c("gray95","darkblue"), name = "Number of\nsimulated\ndatasets") +
   geom_abline(intercept = 0, slope = 1)+
   coord_cartesian(xlim = lim,ylim=lim)+
-  ggtitle(paste0("Posterior predictive check: \n\nBayesian p-value = ",pval_adult))+
-  xlab("RMSE (actual dataset)")+
-  ylab("RMSE (simulated dataset)")+
+  ggtitle(paste0("Posterior predictive check: \n\nBayesian p-value = ",Bayesian_pval))+
+  xlab("RMSE (actual datasets)")+
+  ylab("RMSE (simulated datasets)")+
   theme_bw()
-plot1
+
+PostPredCheckPlot
+
+png(paste0("output/figures/goodness_of_fit/LESP_PPC.png"), width = 6, height = 4, units = "in", res = 600)
+print(PostPredCheckPlot)
+dev.off()
+
+# ----------------------------------
+# Plot observed counts versus estimated annual indices at each colony
+# Do they track the 1:1 line?
+# ----------------------------------
+
+# Extract predictions of annual indices in dataframe format
+fit_samples_colony = reshape2::melt(out$sims.list$population_index) %>%
+  rename(samp = Var1, year_numeric = Var2, colony_numeric = Var3, N_pred = value) %>%
+  full_join(colony_name_table) %>% full_join(year_table)
+
+# Summarize
+annual_summary_colony = fit_samples_colony %>% 
+  group_by(Colony, Year) %>%
+  summarize(q025 = quantile(N_pred,0.025),
+            q50 = quantile(N_pred,0.500),
+            mean = mean(N_pred),
+            q975 = quantile(N_pred,0.975))
+
+# Join with observed data
+annual_summary_colony <- annual_summary_colony %>% full_join(spdat)
+
+ObsPredPlot <- ggplot(annual_summary_colony, 
+       aes(x = Count, y = q50, ymin = q025, ymax = q975, 
+           col = Colony))+
+  geom_abline(slope = 1, intercept = 0)+
+  geom_point()+
+  geom_errorbar(width=0)+
+  xlab("Observed Count")+
+  ylab("Estimated Population Index")+
+  scale_y_continuous(trans="log10", labels = comma)+
+  scale_x_continuous(trans="log10", labels = comma)+
+  ggtitle("Predicted annual indices vs observed counts\n\n(Note logarithmic axes)")
+
+ObsPredPlot
+
+png(paste0("output/figures/goodness_of_fit/LESP_Obs_vs_Pred.png"), width = 8, height = 4, units = "in", res = 600)
+print(ObsPredPlot)
+dev.off()
 
 # ************************************************
 # SUMMARIZE AND PLOT RESULTS
@@ -226,27 +271,68 @@ spdat$SE_est = out$mean$survey_SE
 
 annual_summary_colony = fit_samples_colony %>% 
   group_by(Colony, Year) %>%
-  summarize(q025 = quantile(N_pred,0.025),
-            q50 = quantile(N_pred,0.500),
-            mean = mean(N_pred),
-            q975 = quantile(N_pred,0.975))
+  summarize(N_med = quantile(N_pred,0.500),
+            N_q025 = quantile(N_pred,0.025),
+            N_q975 = quantile(N_pred,0.975))
 
-# Plot results for each colony
-colony_plot_freeaxis = ggplot() +
-  
-  # Full time series
-  geom_ribbon(data = annual_summary_colony, aes(x = Year, ymin = q025, ymax = q975), fill = "dodgerblue",col = "transparent", alpha = 0.3)+
-  geom_line(data = annual_summary_colony, aes(x = Year, y = q50), col = "dodgerblue", linewidth = 1, alpha = 0.7)+
-  
-  geom_errorbar(data = spdat, aes(x = Year, ymin = Count - 1.96*SE_est, ymax = Count + 1.96*SE_est), width = 0)+
-  geom_point(data = spdat,aes(x = Year, y = Count))+
-  xlab("Year")+
-  ylab("Population index")+
-  
-  facet_wrap(Colony~., scales = "free_y")+
-  scale_y_continuous(labels = comma)
+# Choose 1000 samples from the posterior to visualize on plot
+samples_to_plot <- sample(unique(fit_samples_colony$samp),1000)
 
-colony_plot_freeaxis
+# Choose years that are considered "the most reliable" for summarizing trends
+# (i.e., the year range where surveys are available at the largest colonies)
+t_start <- 1984
+t_end <- 2023
+
+# Create plot of colony trajectories, overlaid with raw data
+colony_trajectory_plot <- ggplot()+
+  
+  # Entire trajectory (shows the estimates outside the "reliable" window)
+  geom_ribbon(data = annual_summary_colony, 
+              aes(x = Year, ymin=N_q025, ymax = N_q975),
+              alpha = 0.2, fill = "gray80", col = "gray60", 
+              linetype = 2, linewidth = 0.5)+
+  
+  geom_line(data = annual_summary_colony, 
+            aes(x = Year, y=N_med), linewidth = 1, col = "gray60")+
+  
+  # Plot 1000 trajectories from Bayesian posterior
+  geom_line(data = subset(fit_samples_colony, 
+                          samp %in% samples_to_plot & 
+                            Year >= t_start & 
+                            Year <= t_end), 
+            aes(x = Year, y = N_pred, col = factor(samp)),alpha = 0.1)+
+  
+  # Thick line for posterior median
+  geom_line(data = subset(annual_summary_colony, 
+                          Year >= t_start & 
+                            Year <= t_end), 
+            aes(x = Year, y= N_med), linewidth = 1, col = "darkblue")+
+  
+  # Thick dashed line for 95% CI
+  geom_ribbon(data = subset(annual_summary_colony,Year >= t_start & 
+                              Year <= t_end), 
+              aes(x = Year, ymin=N_q025, ymax = N_q975),
+              fill = "transparent", col = "darkblue", 
+              linetype = 2, linewidth = 0.5)+
+  
+  # Observed counts
+  geom_point(data = spdat, aes(x = Year, y = Count), size = 2)+
+  geom_errorbar(data = spdat, aes(x = Year, ymin = Count-1.96*SE_est, ymax = Count+1.96*SE_est), width = 0, linewidth = 1)+
+  
+  scale_y_continuous(labels = comma)+
+  
+  scale_color_manual(values=rep("dodgerblue",length(unique(fit_samples_colony$samp))), 
+                     guide = "none")+
+  
+  ylab("Index of Abundance") +
+  facet_wrap(Colony~., scales = "free_y")
+
+colony_trajectory_plot
+
+png(paste0("output/figures/trajectory_and_trend_plots/LESP_trajectory_colony.png"), width = 12, height = 6, units = "in", res = 600)
+print(colony_trajectory_plot)
+dev.off()
+
 
 # ----------------------------------
 # Plot regional trajectory
@@ -260,8 +346,8 @@ fit_samples_regional = fit_samples_colony %>%
 annual_summary_regional <- fit_samples_regional %>%
   group_by(Year) %>%
   summarize(N_med = median(N_pred),
-            N_lcl = quantile(N_pred,0.025),
-            N_ucl = quantile(N_pred,0.975))
+            N_q025 = quantile(N_pred,0.025),
+            N_q975 = quantile(N_pred,0.975))
 
 # Choose 1000 samples from the posterior to visualize on plot
 samples_to_plot <- sample(unique(fit_samples_regional$samp),1000)
@@ -275,7 +361,7 @@ t_end <- 2023
 ylim = annual_summary_regional %>%
   subset(Year >= t_start & Year <= t_end) %>%
   summarize(min = 0,
-            max = max(N_ucl))
+            max = max(N_q975))
 
 ylim = fit_samples_regional %>%
   ungroup() %>%
@@ -291,18 +377,12 @@ regional_trajectory_plot <- ggplot()+
   
   # Entire trajectory (shows the estimates outside the "reliable" window)
   geom_ribbon(data = annual_summary_regional, 
-              aes(x = Year, ymin=N_lcl, ymax = N_ucl),
+              aes(x = Year, ymin=N_q025, ymax = N_q975),
               alpha = 0.2, fill = "gray80", col = "gray60", 
               linetype = 2, linewidth = 0.5)+
   
   geom_line(data = annual_summary_regional, 
             aes(x = Year, y=N_med), linewidth = 1, col = "gray60")+
-  
-  # "Reliable" survey window
-  geom_ribbon(data = subset(annual_summary_regional, 
-                            Year >= t_start & Year <= t_start), 
-              aes(x = Year, ymin=N_lcl, ymax = N_ucl),
-              alpha = 0.1, fill = "dodgerblue", col = "black", linetype = 2, linewidth = 0.5)+
   
   # Plot 1000 trajectories from Bayesian posterior
   geom_line(data = subset(fit_samples_regional, 
@@ -311,18 +391,18 @@ regional_trajectory_plot <- ggplot()+
                             Year <= t_end), 
             aes(x = Year, y = N_pred, col = factor(samp)),alpha = 0.1)+
   
-  # Thick black line for posterior median
+  # Thick darkblue line for posterior median
   geom_line(data = subset(annual_summary_regional, 
                           Year >= t_start & 
                             Year <= t_end), 
-            aes(x = Year, y= N_med), linewidth = 1, col = "black")+
+            aes(x = Year, y= N_med), linewidth = 1, col = "darkblue")+
   
-  # Thick black dashed line for 95% CI
+  # Thick darkblue dashed line for 95% CI
   geom_ribbon(data = subset(annual_summary_regional,Year >= t_start & 
                               Year <= t_end), 
-              aes(x = Year, ymin=N_lcl, ymax = N_ucl),
-              fill = "transparent", col = "black", 
-              linetype = 2, linewidth = 1)+
+              aes(x = Year, ymin=N_q025, ymax = N_q975),
+              fill = "transparent", col = "darkblue", 
+              linetype = 2, linewidth = 0.5)+
   
   coord_cartesian(ylim = c(ylim$min,ylim$max))+
   
@@ -332,9 +412,10 @@ regional_trajectory_plot <- ggplot()+
                      guide = "none")+
   
   ylab("Index of Abundance")
+
 regional_trajectory_plot
 
-png(paste0("output/figures/trajectory_plots/LESP_trajectory_regional.png"), width = 6, height = 4, units = "in", res = 600)
+png(paste0("output/figures/trajectory_and_trend_plots/LESP_trajectory_regional.png"), width = 6, height = 4, units = "in", res = 600)
 print(regional_trajectory_plot)
 dev.off()
 
@@ -363,7 +444,9 @@ mean(regional_trend_samples <= -2)
 mean(regional_trend_samples <= -3)
 
 # Histogram illustrating posterior trend estimate
-hist(regional_trend_samples, breaks = 500, 
+png(paste0("output/figures/trajectory_and_trend_plots/LESP_trend_histogram.png"), width = 6, height = 4, units = "in", res = 600)
+
+hist(regional_trend_samples, breaks = 100, 
      col = "dodgerblue", border = "dodgerblue",
      main = "Posterior estimate of regional population trend",
      xlab = "Trend (% change per year)",
@@ -372,10 +455,11 @@ hist(regional_trend_samples, breaks = 500,
 abline(v = 0)
 abline(v = median(regional_trend_samples), col = "blue", lwd=3)
 abline(v = quantile(regional_trend_samples,c(0.025,0.975)), col = "blue", lwd=3, lty =2)
+dev.off()
 
 # Violin plot to visualize posterior trend estimate
 
-trend_plot <- ggplot()+
+trend_violin_plot <- ggplot()+
   geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
   geom_violin(aes(y = regional_trend_samples, x = "LESP"),
               fill = "dodgerblue",col = "blue",
@@ -383,6 +467,10 @@ trend_plot <- ggplot()+
               draw_quantiles = c(0.025,0.5,0.975))+
   xlab("")+
   ylab("Trend (% change per year)")+
-  ggtitle("Posterior estimate of regional population trend")+
+  ggtitle("Posterior estimate of\nregional population trend")+
   coord_cartesian(ylim=c(-4,4))
-trend_plot
+trend_violin_plot
+
+png(paste0("output/figures/trajectory_and_trend_plots/LESP_trend_violin.png"), width = 4, height = 4, units = "in", res = 600)
+print(trend_violin_plot)
+dev.off()
