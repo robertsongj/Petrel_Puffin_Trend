@@ -1,3 +1,8 @@
+# Tue Feb 13 15:14:09 2024 ------------------------------
+
+# GJR stole (i.e., forked and branched) this repo from Dave Iles to make a ,ess
+# of things and see if he can get it to work
+
 # ------------------------------------------------
 # Load libraries
 # ------------------------------------------------
@@ -7,8 +12,7 @@ library(readxl)    # for importing xlsx
 library(jagsUI)    # for analysis
 library(mgcv)      # for creating jagam object (bayesian gams)
 library(scales)    # for plotting
-
-setwd("C:/Users/IlesD/OneDrive - EC-EC/Iles/Projects/Seabirds/Petrel_Puffin_Trend/")
+library(here)      # for sanity
 
 rm(list=ls())
 
@@ -37,8 +41,19 @@ CustomTheme <- theme_update(legend.key = element_rect(colour = NA),
 # Load dataset
 # ------------------------------------------------
 
-spdat = read_xlsx("data/LESP_trend_data.xlsx", sheet = 1) %>%
-  dplyr::rename(Count = `Mature individuals`)
+load(here("input", "Atlantic LHSP colonies clean.RData"))
+
+# align variables with original code
+
+spdat <- mydf
+
+names(spdat) <- tools::toTitleCase(names(spdat))
+
+names(spdat)[names(spdat)=="Sd"] <-  "SE"
+
+mycountry <- "Canada"
+
+spdat <- spdat[spdat$Country == mycountry,]
 
 spdat <- subset(spdat, Year >= 1970)
 
@@ -94,6 +109,7 @@ colony = spdat$colony_numeric
 ncolony <- max(colony)
 count <- round(spdat$Count) # Must be integer
 ncounts = length(count)
+C0prior <- 0 # approximate mean of exp(N), gets model closer to the intercept to start
 
 # Use jagam to prepare basis functions
 nyearspred = length(1:ymax)
@@ -116,7 +132,8 @@ jags_data = list(X = gamprep$jags.data$X,
                  nyearspred = nyearspred,
                  year = year,
                  survey_count = spdat$Count,
-                 survey_SE = spdat$SE)
+                 survey_SE = spdat$SE,
+                 C0prior = C0prior)
 
 # Fit model using JAGS
 parameters.to.save = c(
@@ -138,13 +155,17 @@ parameters.to.save = c(
   # GAM components
   "C",
   "beta.X",
+  "B.X",
   
   # Annual population indices
   "population_index",
   
   # Discrepancy measures for posterior predictive checks (goodness-of-fit testing)
   "RMSE_actual",
-  "RMSE_simulated"
+  "RMSE_simulated",
+  
+  # Penalty measures
+  'lambda'
 )
 
 if (!file.exists("output/LESP_fitted.rds")){
@@ -153,10 +174,10 @@ if (!file.exists("output/LESP_fitted.rds")){
   out <- jags(data = jags_data,
               parameters.to.save = parameters.to.save,
               inits = NULL,
-              n.iter =  5500000,
-              n.burnin = 500000,
+              n.iter =  550000,
+              n.burnin = 50000,
               n.thin = 2500,
-              model.file = "code/Seabird_Model.jags",
+              model.file = "code/Seabird_Model-no int.jags",
               n.chains = 3,
               parallel = TRUE)
   
@@ -167,8 +188,9 @@ if (!file.exists("output/LESP_fitted.rds")){
 # Load fitted model
 out <- readRDS(file = "output/LESP_fitted.rds")
 
+
 # How long it took to fit the model
-out$mcmc.info$elapsed.mins 
+out$mcmc.info$elapsed.mins
 
 # ************************************************
 # Model convergence
@@ -266,6 +288,9 @@ dev.off()
 # Summarize and plot colony-level trajectories and trends
 # ----------------------------------
 
+
+spdat$SE_est = out$mean$survey_SE
+
 # Extract predictions of annual indices in dataframe format
 fit_samples_colony = reshape2::melt(out$sims.list$population_index) %>%
   rename(samp = Var1, year_numeric = Var2, colony_numeric = Var3, N_pred = value) %>%
@@ -278,7 +303,7 @@ annual_summary_colony = fit_samples_colony %>%
             N_q975 = quantile(N_pred,0.975))
 
 # Choose 1000 samples from the posterior to visualize on plot
-samples_to_plot <- sample(unique(fit_samples_colony$samp),1000)
+samples_to_plot <- sample(unique(fit_samples_colony$samp),600)
 
 # Choose years that are considered "the most reliable" for summarizing trends
 # (i.e., the year range where surveys are available at the largest colonies)
@@ -351,7 +376,7 @@ annual_summary_regional <- fit_samples_regional %>%
             N_q975 = quantile(N_pred,0.975))
 
 # Choose 1000 samples from the posterior to visualize on plot
-samples_to_plot <- sample(unique(fit_samples_regional$samp),1000)
+samples_to_plot <- sample(unique(fit_samples_regional$samp),500)
 
 # Choose years that are considered "the most reliable" for summarizing trends
 # (i.e., the year range where surveys are available at the largest colonies)
@@ -475,3 +500,19 @@ trend_violin_plot
 png(paste0("output/figures/trajectory_and_trend_plots/LESP_trend_violin.png"), width = 4, height = 4, units = "in", res = 600)
 print(trend_violin_plot)
 dev.off()
+
+
+# Wed Feb 14 10:55:02 2024 ------------------------------
+
+# some other ways to look at the data
+
+out$mean$C
+out$mean$beta.X
+out$mean$B.X
+out$mean$sdbeta
+out$mean$lambda
+out$mean$ProcVar_sd
+hist(out$sims.list$ProcVar_sd)
+
+out$sims.list$population_index
+mean(rgamma(1000,0.05, 0.005))
