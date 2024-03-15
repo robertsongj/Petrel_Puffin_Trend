@@ -4,3 +4,4 @@ data/ATPU trend Atlantic Region up to 2023/
 code/archived_code/
 *.rds
 .Rhistory
+.Rproj.user
