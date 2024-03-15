@@ -35,12 +35,23 @@ model {
     rho[i] <- log(lambda[i])
   } # i
   
-  for(j in 1:nknots){ # Computation of GAM components
+  for (k in 1:ncolony){
+  
+	beta.X[k,1] <- B.X[1]
+  
+		for (i in 1:nyearspred ){
+        
+			X.part[i,1,k] <- beta.X[k,1]*(X[i,1])
+        
+      } # i
+  } # k
+  
+  for(j in 2:nknots){ # Computation of GAM components
     
     for(k in 1:ncolony){
       
       # Draw betas for each colony (for this knot) from a shared distribution
-      beta.X[k,j] ~ dnorm(B.X[j],taubeta) 
+      beta.X[k,j] ~ dnorm(B.X[j],taubeta)
       
       for ( i in 1:nyearspred ){
         
