@@ -53,6 +53,13 @@ colonies_to_include = spdat %>%
 colonies_to_include = subset(colonies_to_include, mean_count > 1000) # keeping this from LESP but should compare with and without
 spdat = subset(spdat, Colony %in% colonies_to_include$Colony)
 
+# Calculate SE for counts with upper and lower confidence limit but no SE
+for(i in 1:nrow(spdat)){
+  if(is.na(spdat$SE[i]) & !(is.na(spdat$`Lower CI`[i]))){
+    spdat$SE[i] <- (spdat$`Upper CI`[i] - spdat$`Lower CI`[i])/3.92
+  }
+}
+
 # Tables that link colony numbers to colony names
 spdat$colony_numeric <- as.integer(factor(spdat$Colony))
 colony_name_table = unique(spdat[,c("Colony","colony_numeric")])
