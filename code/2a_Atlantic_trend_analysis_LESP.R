@@ -73,6 +73,7 @@ colonies_to_include = spdat %>%
             n_surveys = length(unique(Year)))
 
 # Omit the smallest LESP colonies that are strongly influencing uncertainty
+# these seem to have already been removed
 colonies_to_include = subset(colonies_to_include, mean_count > 1000)
 spdat = subset(spdat, Colony %in% colonies_to_include$Colony)
 
@@ -297,9 +298,7 @@ png(paste0("output/figures/goodness_of_fit/LESP_Obs_vs_Pred.png"), width = 8, he
 print(ObsPredPlot)
 dev.off()
 
-# ************************************************
 # results and plotting ----
-# ************************************************
 
 # trajectories ----
 
@@ -336,6 +335,8 @@ t_end <- 2023
 # we should also add province to help the reader orient relative to the map
 
 # bring in the known colony coordinates
+AEA_proj <- "+proj=aea +lat_1=50 +lat_2=70 +lat_0=40 +lon_0=-60 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs "
+
 coords = read_xlsx("data/LESP_colony_coordinates.xlsx", sheet = 1) %>%
   subset(!is.na(Latitude)&!is.na(Longitude)) %>%
   st_as_sf(coords = c("Longitude", "Latitude"),crs=4326, remove = FALSE) %>%
@@ -602,6 +603,60 @@ trend_violin_plot_all
 ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_violinplot_1973-2023.png", plot=trend_violin_plot_all, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
+# 1978-2023 ----
+# next from 1978 since that is 3 generations for LESP (14.8 years, COSEWIC)
+t_start <- 1978
+regional_indices_t_start <- subset(fit_samples_regional, Year == t_start)
+regional_indices_t_end <- subset(fit_samples_regional, Year == t_end)
+regional_trend_samples_1978 <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
+
+# Posterior median trend estimate (and 95% credible interval)
+median(regional_trend_samples_1978)
+quantile(regional_trend_samples_1978,c(0.025,0.975))
+
+# Probability trend is negative
+mean(regional_trend_samples_1978 <= 0)
+
+# Probability trend is less than -1% per year
+mean(regional_trend_samples_1978 <= -1)
+
+# Probability trend is less than -2% per year
+mean(regional_trend_samples_1978 <= -2)
+
+# Probability trend is less than -3% per year
+mean(regional_trend_samples_1978 <= -3)
+
+# Histogram illustrating posterior trend estimate
+regional_trend_samples_1978 <- as.data.frame(regional_trend_samples_1978)
+names(regional_trend_samples_1978)<-c("trend")
+trend_hist_1978 <- ggplot(regional_trend_samples_1978, aes(x=trend)) + 
+  geom_histogram() +
+  geom_vline(aes(xintercept=median(trend)), linetype="solid", color = "blue", lwd=1) +
+  geom_vline(aes(xintercept=quantile(trend,c(0.025))), linetype="dashed", color = "blue", lwd=1) +
+  geom_vline(aes(xintercept=quantile(trend,c(0.975))), linetype="dashed", color = "blue", lwd=1) +
+  geom_vline(aes(xintercept=0), linetype="solid", color = "black", lwd=1) +
+  labs(x="Trend (% change per year)", y="Probability Density") 
+trend_hist_1978
+ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_histogram_1978-2023.png", plot=trend_hist_1978, 
+       device="png", dpi=300, units="cm", width=20, height=20)
+
+# Violin plot to visualize posterior trend estimate
+
+trend_violin_plot_1978 <- ggplot(regional_trend_samples_1978)+
+  geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
+  geom_violin(aes(y = trend, x = "LESP"),
+              fill = "grey40",col = "black",
+              alpha = 0.5,
+              draw_quantiles = c(0.025,0.5,0.975))+
+  xlab("")+
+  ylab("Trend (% change per year)")+
+  #ggtitle("Posterior estimate of\nregional population trend")+
+  coord_cartesian(ylim=c(-4,4))
+trend_violin_plot_1978
+
+ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_violinplot_1978-2023.png", plot=trend_violin_plot_1978, 
+       device="png", dpi=300, units="cm", width=20, height=20)
+
 # 1984-2023 ----
 # and again since 1984 when bacallieu monitoring started
 t_start <- 1984
@@ -656,12 +711,13 @@ trend_violin_plot_1984
 ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_violinplot_1984-2023.png", plot=trend_violin_plot_1984, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
-# both periods ----
+# multiple periods ----
 # we could combine them to show them together as well
-regional_trend_samples_1984$period <- "1984-2023"
-regional_trend_samples_all$period <- "1973-2023"
+regional_trend_samples_1984$period <- "1984-2023\nmost colonies\nmonitored"
+regional_trend_samples_1978$period <- "1978-2023\nlast three\ngenerations"
+regional_trend_samples_all$period <- "1973-2023\nfull monitoring\nperiod"
 
-regional_trend_samples <- rbind(regional_trend_samples_1984, regional_trend_samples_all)
+regional_trend_samples <- rbind(regional_trend_samples_1984, regional_trend_samples_1978, regional_trend_samples_all)
 
 trend_violin_plot <- ggplot(regional_trend_samples, aes(group=period))+
   geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
@@ -675,7 +731,7 @@ trend_violin_plot <- ggplot(regional_trend_samples, aes(group=period))+
   coord_cartesian(ylim=c(-4,2))
 trend_violin_plot
 
-ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_violinplot_2period.png", plot=trend_violin_plot, 
+ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_violinplot_3periods.png", plot=trend_violin_plot, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
 # trajectory + violin trend ----
@@ -686,7 +742,7 @@ p2 <- trend_violin_plot + annotate("text", label = "B", x=-Inf, y=Inf, vjust=2, 
 p <- p1|p2
 p
 
-ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trajectory.plus.trend.png", plot=p, 
+ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trajectory.plus.trends.png", plot=p, 
        device="png", dpi=300, units="cm", width=30, height=15)
 
 # Wed Feb 14 10:55:02 2024 ------------------------------
