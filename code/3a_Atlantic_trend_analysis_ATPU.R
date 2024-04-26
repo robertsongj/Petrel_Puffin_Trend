@@ -295,6 +295,7 @@ dev.off()
 
 # trajectories ----
 
+# *colony level ----
 # Summarize and plot colony-level trajectories and trends
 
 spdat$SE_est = out$mean$survey_SE
@@ -452,7 +453,7 @@ ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trajectory_colon
        device="png", dpi=300, units="cm", width=30, height=25)
 
 
-# Plot regional trajectory
+# *regional----
 
 
 fit_samples_regional = fit_samples_colony %>% 
@@ -525,6 +526,7 @@ geom_line(data = subset(fit_samples_regional,
   coord_cartesian(ylim = c(ylim$min,ylim$max))+
   
   scale_y_continuous(labels = comma)+
+  scale_x_continuous(limits=c(t_start,t_end), breaks = seq(1970, 2020, by = 10))+
   
   scale_color_manual(values=rep("grey50",length(unique(fit_samples_regional$samp))), 
                      guide = "none")+
