@@ -596,8 +596,9 @@ ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot
        device="png", dpi=300, units="cm", width=20, height=20)
 
 # 1978-2023 ----
-# and again since 1978 when most colony monitoring started
+# and again since 1978 until 2018 when most colony monitoring started and finished
 t_start <- 1978
+t_end <- 2018
 regional_indices_t_start <- subset(fit_samples_regional, Year == t_start)
 regional_indices_t_end <- subset(fit_samples_regional, Year == t_end)
 regional_trend_samples_1978 <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
@@ -629,7 +630,7 @@ trend_hist_1978 <- ggplot(regional_trend_samples_1978, aes(x=trend)) +
   geom_vline(aes(xintercept=0), linetype="solid", color = "black", lwd=1) +
   labs(x="Trend (% change per year)", y="Probability Density") 
 trend_hist_1978
-ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_histogram_1978-2023.png", plot=trend_hist_1978, 
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_histogram_1978-2018.png", plot=trend_hist_1978, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
 # Violin plot to visualize posterior trend estimate
@@ -646,7 +647,7 @@ trend_violin_plot_1978 <- ggplot(regional_trend_samples_1978)+
   coord_cartesian(ylim=c(-2,5.5))
 trend_violin_plot_1978
 
-ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_1978-2023.png", plot=trend_violin_plot_1978, 
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_1978-2018.png", plot=trend_violin_plot_1978, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
 
@@ -707,7 +708,7 @@ ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot
 #multiple periods ----
 # we could combine them to show them together as well
 regional_trend_samples_1990$period <- "1990-2023\nlast three\ngenerations"
-regional_trend_samples_1978$period <- "1978-2023\nmost colonies\nmonitored"
+regional_trend_samples_1978$period <- "1978-2018\nmost colonies\nmonitored"
 regional_trend_samples_all$period <- "1965-2023\nfull monitoring\nperiod"
 
 regional_trend_samples <- rbind(regional_trend_samples_1978, regional_trend_samples_1990, regional_trend_samples_all)
