@@ -590,7 +590,7 @@ ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_histogram_
 trend_violin_plot_all <- ggplot(regional_trend_samples_all)+
   geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
   geom_violin(aes(y = trend, x = "LESP"),
-              fill = "dodgerblue",col = "blue",
+              fill = "grey40",col = "black",
               alpha = 0.5,
               draw_quantiles = c(0.025,0.5,0.975))+
   xlab("")+
@@ -644,7 +644,7 @@ ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_histogram_
 trend_violin_plot_1984 <- ggplot(regional_trend_samples_1984)+
   geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
   geom_violin(aes(y = trend, x = "LESP"),
-              fill = "dodgerblue",col = "blue",
+              fill = "grey40",col = "black",
               alpha = 0.5,
               draw_quantiles = c(0.025,0.5,0.975))+
   xlab("")+
