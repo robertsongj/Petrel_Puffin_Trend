@@ -768,7 +768,7 @@ trend_violin_plot <- ggplot(regional_trend_samples, aes(group=period))+
   xlab("")+
   ylab("Trend\n(% change per year)")+
   #ggtitle("Posterior estimate of\nregional population trend")+
-  coord_cartesian(ylim=c(-10,10))
+  coord_cartesian(ylim=c(-5,10))
 trend_violin_plot
 
 ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_violinplot_3periods.png", plot=trend_violin_plot, 
