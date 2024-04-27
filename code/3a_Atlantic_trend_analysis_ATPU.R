@@ -556,9 +556,12 @@ trend.5.yr.windows.summary <- trend.5.yr.windows %>% group_by(Year) %>%
             trend_q025 = quantile(trend,c(0.025)),
             trend_q975 = quantile(trend,c(0.975)))
 
-trend_5.yr <- ggplot(trend.5.yr.windows.summary)+
-  geom_line(aes(x = Year, y= trend_med), linewidth = 1, col = "black")+
-  geom_ribbon(aes(x = Year, ymin=trend_q025, ymax = trend_q975),
+trend_5.yr <- ggplot()+
+  geom_line(data = trend.5.yr.windows, aes(x = Year, y= trend, col = factor(samp)),alpha = 0.1)+
+  scale_color_manual(values=rep("grey50",length(unique(trend.5.yr.windows$samp))), 
+                     guide = "none")+
+  geom_line(data = trend.5.yr.windows.summary, aes(x = Year, y= trend_med), linewidth = 1, col = "black")+
+  geom_ribbon(data = trend.5.yr.windows.summary,aes(x = Year, ymin=trend_q025, ymax = trend_q975),
               fill = "transparent", col = "black", 
               linetype = 2, linewidth = 0.5)+
   geom_hline(yintercept=0) +
