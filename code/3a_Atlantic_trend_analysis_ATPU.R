@@ -526,7 +526,7 @@ geom_line(data = subset(fit_samples_regional,
   coord_cartesian(ylim = c(ylim$min,ylim$max))+
   
   scale_y_continuous(labels = comma)+
-  scale_x_continuous(limits=c(t_start,t_end), breaks = seq(1970, 2020, by = 10))+
+  scale_x_continuous(limits=c(t_start,t_end), breaks = seq(1970, 2020, by = 10), expand = c(0, 0))+
   
   scale_color_manual(values=rep("grey50",length(unique(fit_samples_regional$samp))), 
                      guide = "none")+
@@ -541,46 +541,78 @@ ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trajectory_regio
 
 # Calculate regional trend ----
 
-# 1965-2023 ----
-# first for the whole monitoring period (1965-2023)
+# first calculate trend in 5-day windows to find where the changepoints are (trend = 0)
+trend.5.yr.windows <- fit_samples_regional %>%
+  group_by(samp) %>%
+  arrange(Year) %>%
+  summarize(Year = Year, 
+            N_pred_start = lag(N_pred, 2),  # 2 years before
+         N_pred_end = lead(N_pred, 2),   # 2 years ahead
+         trend = 100 * ((N_pred_end/N_pred_start)^(1/(5))-1)) %>% # 5-year window
+  filter(!is.na(N_pred_start), !is.na(N_pred_end)) 
+
+trend.5.yr.windows.summary <- trend.5.yr.windows %>% group_by(Year) %>%
+  summarize(trend_med = median(trend),
+            trend_q025 = quantile(trend,c(0.025)),
+            trend_q975 = quantile(trend,c(0.975)))
+
+trend_5.yr <- ggplot(trend.5.yr.windows.summary)+
+  geom_line(aes(x = Year, y= trend_med), linewidth = 1, col = "black")+
+  geom_ribbon(aes(x = Year, ymin=trend_q025, ymax = trend_q975),
+              fill = "transparent", col = "black", 
+              linetype = 2, linewidth = 0.5)+
+  geom_hline(yintercept=0) +
+  scale_x_continuous(limits=c(1965,2023), breaks = seq(1970, 2020, by = 10),expand = c(0, 0))+
+  ylab("5-year Trend\n(% change per year)")
+trend_5.yr
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_5.yr.windows.png", plot=trend_5.yr, 
+       device="png", dpi=300, units="cm", width=20, height=20)
+
+# so where does the median cross the 0 line?
+subset(trend.5.yr.windows.summary, trend_med >-1 & trend_med <1)
+# definitely around 1977-1978 and a switch again around 2005
+
+# 1965-1978 ----
+# first period 
 t_start <- 1965
+t_end <- 1978
 regional_indices_t_start <- subset(fit_samples_regional, Year == t_start)
 regional_indices_t_end <- subset(fit_samples_regional, Year == t_end)
-regional_trend_samples_all <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
+regional_trend_samples_1 <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
 
 # Posterior median trend estimate (and 95% credible interval)
-median(regional_trend_samples_all)
-quantile(regional_trend_samples_all,c(0.025,0.975))
+median(regional_trend_samples_1)
+quantile(regional_trend_samples_1,c(0.025,0.975))
 
 # Probability trend is negative
-mean(regional_trend_samples_all <= 0)
+mean(regional_trend_samples_1 <= 0)
 
 # Probability trend is less than -1% per year
-mean(regional_trend_samples_all <= -1)
+mean(regional_trend_samples_1 <= -1)
 
 # Probability trend is less than -2% per year
-mean(regional_trend_samples_all <= -2)
+mean(regional_trend_samples_1 <= -2)
 
 # Probability trend is less than -3% per year
-mean(regional_trend_samples_all <= -3)
+mean(regional_trend_samples_1 <= -3)
 
 # Histogram illustrating posterior trend estimate
-regional_trend_samples_all <- as.data.frame(regional_trend_samples_all)
-names(regional_trend_samples_all)<-c("trend")
-trend_hist_all <- ggplot(regional_trend_samples_all, aes(x=trend)) + 
+regional_trend_samples_1 <- as.data.frame(regional_trend_samples_1)
+names(regional_trend_samples_1)<-c("trend")
+trend_hist_1 <- ggplot(regional_trend_samples_1, aes(x=trend)) + 
   geom_histogram() +
   geom_vline(aes(xintercept=median(trend)), linetype="solid", color = "blue", lwd=1) +
   geom_vline(aes(xintercept=quantile(trend,c(0.025))), linetype="dashed", color = "blue", lwd=1) +
   geom_vline(aes(xintercept=quantile(trend,c(0.975))), linetype="dashed", color = "blue", lwd=1) +
   geom_vline(aes(xintercept=0), linetype="solid", color = "black", lwd=1) +
   labs(x="Trend (% change per year)", y="Probability Density") 
-trend_hist_all
-ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_histogram_1965-2023.png", plot=trend_hist_all, 
+trend_hist_1
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_histogram_1965-1978.png", plot=trend_hist_1, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
 # Violin plot to visualize posterior trend estimate
 
-trend_violin_plot_all <- ggplot(regional_trend_samples_all)+
+trend_violin_plot_1 <- ggplot(regional_trend_samples_1)+
   geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
   geom_violin(aes(y = trend, x = "ATPU"),
               fill = "grey40",col = "black",
@@ -589,53 +621,53 @@ trend_violin_plot_all <- ggplot(regional_trend_samples_all)+
   xlab("")+
   ylab("Trend (% change per year)")+
   #ggtitle("Posterior estimate of\nregional population trend")+
-  coord_cartesian(ylim=c(-2,5.5))
-trend_violin_plot_all
+  coord_cartesian(ylim=c(-10,5))
+trend_violin_plot_1
 
-ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_1965-2023.png", plot=trend_violin_plot_all, 
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_1965-1978.png", plot=trend_violin_plot_1, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
-# 1978-2023 ----
-# and again since 1978 until 2018 when most colony monitoring started and finished
+# 1978-2005 ----
+# second period
 t_start <- 1978
-t_end <- 2018
+t_end <- 2005
 regional_indices_t_start <- subset(fit_samples_regional, Year == t_start)
 regional_indices_t_end <- subset(fit_samples_regional, Year == t_end)
-regional_trend_samples_1978 <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
+regional_trend_samples_2 <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
 
 # Posterior median trend estimate (and 95% credible interval)
-median(regional_trend_samples_1978)
-quantile(regional_trend_samples_1978,c(0.025,0.975))
+median(regional_trend_samples_2)
+quantile(regional_trend_samples_2,c(0.025,0.975))
 
 # Probability trend is negative
-mean(regional_trend_samples_1978 <= 0)
+mean(regional_trend_samples_2 <= 0)
 
 # Probability trend is less than -1% per year
-mean(regional_trend_samples_1978 <= -1)
+mean(regional_trend_samples_2 <= -1)
 
 # Probability trend is less than -2% per year
-mean(regional_trend_samples_1978 <= -2)
+mean(regional_trend_samples_2 <= -2)
 
 # Probability trend is less than -3% per year
-mean(regional_trend_samples_1978 <= -3)
+mean(regional_trend_samples_2 <= -3)
 
 # Histogram illustrating posterior trend estimate
-regional_trend_samples_1978 <- as.data.frame(regional_trend_samples_1978)
-names(regional_trend_samples_1978)<-c("trend")
-trend_hist_1978 <- ggplot(regional_trend_samples_1978, aes(x=trend)) + 
+regional_trend_samples_2 <- as.data.frame(regional_trend_samples_2)
+names(regional_trend_samples_2)<-c("trend")
+trend_hist_2 <- ggplot(regional_trend_samples_2, aes(x=trend)) + 
   geom_histogram() +
   geom_vline(aes(xintercept=median(trend)), linetype="solid", color = "blue", lwd=1) +
   geom_vline(aes(xintercept=quantile(trend,c(0.025))), linetype="dashed", color = "blue", lwd=1) +
   geom_vline(aes(xintercept=quantile(trend,c(0.975))), linetype="dashed", color = "blue", lwd=1) +
   geom_vline(aes(xintercept=0), linetype="solid", color = "black", lwd=1) +
   labs(x="Trend (% change per year)", y="Probability Density") 
-trend_hist_1978
-ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_histogram_1978-2018.png", plot=trend_hist_1978, 
+trend_hist_2
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_histogram_2965-1978.png", plot=trend_hist_2, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
 # Violin plot to visualize posterior trend estimate
 
-trend_violin_plot_1978 <- ggplot(regional_trend_samples_1978)+
+trend_violin_plot_2 <- ggplot(regional_trend_samples_2)+
   geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
   geom_violin(aes(y = trend, x = "ATPU"),
               fill = "grey40",col = "black",
@@ -644,53 +676,107 @@ trend_violin_plot_1978 <- ggplot(regional_trend_samples_1978)+
   xlab("")+
   ylab("Trend (% change per year)")+
   #ggtitle("Posterior estimate of\nregional population trend")+
-  coord_cartesian(ylim=c(-2,5.5))
-trend_violin_plot_1978
+  coord_cartesian(ylim=c(-10,5))
+trend_violin_plot_2
 
-ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_1978-2018.png", plot=trend_violin_plot_1978, 
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_1978-2005.png", plot=trend_violin_plot_2, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
+# 2005-2023 ----
+# third period
+t_start <- 2005
+t_end <- 2023
+regional_indices_t_start <- subset(fit_samples_regional, Year == t_start)
+regional_indices_t_end <- subset(fit_samples_regional, Year == t_end)
+regional_trend_samples_3 <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
+
+# Posterior median trend estimate (and 95% credible interval)
+median(regional_trend_samples_3)
+quantile(regional_trend_samples_3,c(0.025,0.975))
+
+# Probability trend is negative
+mean(regional_trend_samples_3 <= 0)
+
+# Probability trend is less than -1% per year
+mean(regional_trend_samples_3 <= -1)
+
+# Probability trend is less than -2% per year
+mean(regional_trend_samples_3 <= -2)
+
+# Probability trend is less than -3% per year
+mean(regional_trend_samples_3 <= -3)
+
+# Histogram illustrating posterior trend estimate
+regional_trend_samples_3 <- as.data.frame(regional_trend_samples_3)
+names(regional_trend_samples_3)<-c("trend")
+trend_hist_3 <- ggplot(regional_trend_samples_3, aes(x=trend)) + 
+  geom_histogram() +
+  geom_vline(aes(xintercept=median(trend)), linetype="solid", color = "blue", lwd=1) +
+  geom_vline(aes(xintercept=quantile(trend,c(0.025))), linetype="dashed", color = "blue", lwd=1) +
+  geom_vline(aes(xintercept=quantile(trend,c(0.975))), linetype="dashed", color = "blue", lwd=1) +
+  geom_vline(aes(xintercept=0), linetype="solid", color = "black", lwd=1) +
+  labs(x="Trend (% change per year)", y="Probability Density") 
+trend_hist_3
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_histogram_2005-2023.png", plot=trend_hist_3, 
+       device="png", dpi=300, units="cm", width=20, height=20)
+
+# Violin plot to visualize posterior trend estimate
+
+trend_violin_plot_3 <- ggplot(regional_trend_samples_3)+
+  geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
+  geom_violin(aes(y = trend, x = "ATPU"),
+              fill = "grey40",col = "black",
+              alpha = 0.5,
+              draw_quantiles = c(0.025,0.5,0.975))+
+  xlab("")+
+  ylab("Trend (% change per year)")+
+  #ggtitle("Posterior estimate of\nregional population trend")+
+  coord_cartesian(ylim=c(-10,7))
+trend_violin_plot_3
+
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_2005-2023.png", plot=trend_violin_plot_3, 
+       device="png", dpi=300, units="cm", width=20, height=20)
 
 # 1990-2023 ----
 # and again since 1990 which is the last 3 generations, since generation time is 11 years according to Bird et al. 2020
 t_start <- 1990
 regional_indices_t_start <- subset(fit_samples_regional, Year == t_start)
 regional_indices_t_end <- subset(fit_samples_regional, Year == t_end)
-regional_trend_samples_1990 <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
+regional_trend_samples_4 <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
 
 # Posterior median trend estimate (and 95% credible interval)
-median(regional_trend_samples_1990)
-quantile(regional_trend_samples_1990,c(0.025,0.975))
+median(regional_trend_samples_4)
+quantile(regional_trend_samples_4,c(0.025,0.975))
 
 # Probability trend is negative
-mean(regional_trend_samples_1990 <= 0)
+mean(regional_trend_samples_4 <= 0)
 
 # Probability trend is less than -1% per year
-mean(regional_trend_samples_1990 <= -1)
+mean(regional_trend_samples_4 <= -1)
 
 # Probability trend is less than -2% per year
-mean(regional_trend_samples_1990 <= -2)
+mean(regional_trend_samples_4 <= -2)
 
 # Probability trend is less than -3% per year
-mean(regional_trend_samples_1990 <= -3)
+mean(regional_trend_samples_4 <= -3)
 
 # Histogram illustrating posterior trend estimate
-regional_trend_samples_1990 <- as.data.frame(regional_trend_samples_1990)
-names(regional_trend_samples_1990)<-c("trend")
-trend_hist_1990 <- ggplot(regional_trend_samples_1990, aes(x=trend)) + 
+regional_trend_samples_4 <- as.data.frame(regional_trend_samples_4)
+names(regional_trend_samples_4)<-c("trend")
+trend_hist_4 <- ggplot(regional_trend_samples_4, aes(x=trend)) + 
   geom_histogram() +
   geom_vline(aes(xintercept=median(trend)), linetype="solid", color = "blue", lwd=1) +
   geom_vline(aes(xintercept=quantile(trend,c(0.025))), linetype="dashed", color = "blue", lwd=1) +
   geom_vline(aes(xintercept=quantile(trend,c(0.975))), linetype="dashed", color = "blue", lwd=1) +
   geom_vline(aes(xintercept=0), linetype="solid", color = "black", lwd=1) +
   labs(x="Trend (% change per year)", y="Probability Density") 
-trend_hist_1990
-ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_histogram_1990-2023.png", plot=trend_hist_1990, 
+trend_hist_4
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_histogram_1990-2023.png", plot=trend_hist_4, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
 # Violin plot to visualize posterior trend estimate
 
-trend_violin_plot_1990 <- ggplot(regional_trend_samples_1990)+
+trend_violin_plot_4 <- ggplot(regional_trend_samples_4)+
   geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
   geom_violin(aes(y = trend, x = "ATPU"),
               fill = "grey40",col = "black",
@@ -700,44 +786,49 @@ trend_violin_plot_1990 <- ggplot(regional_trend_samples_1990)+
   ylab("Trend (% change per year)")+
   #ggtitle("Posterior estimate of\nregional population trend")+
   coord_cartesian(ylim=c(-2,5.5))
-trend_violin_plot_1990
+trend_violin_plot_4
 
-ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_1990-2023.png", plot=trend_violin_plot_1990, 
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_1990-2023.png", plot=trend_violin_plot_4, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
 #multiple periods ----
 # we could combine them to show them together as well
-regional_trend_samples_1990$period <- "1990-2023\nlast three\ngenerations"
-regional_trend_samples_1978$period <- "1978-2018\nmost colonies\nmonitored"
-regional_trend_samples_all$period <- "1965-2023\nfull monitoring\nperiod"
+regional_trend_samples_4$period <- "1990-2023\n(last three generations)"
+regional_trend_samples_3$period <- "2005-2023\n"
+regional_trend_samples_2$period <- "1978-2005\n"
+regional_trend_samples_1$period <- "1965-1978\n"
 
-regional_trend_samples <- rbind(regional_trend_samples_1978, regional_trend_samples_1990, regional_trend_samples_all)
+regional_trend_samples <- rbind(regional_trend_samples_1, regional_trend_samples_2, regional_trend_samples_3, regional_trend_samples_4)
+
+# order the periods
+regional_trend_samples$period <- factor(regional_trend_samples$period, levels=c("1965-1978\n","1978-2005\n","2005-2023\n","1990-2023\n(last three generations)"))
 
 trend_violin_plot <- ggplot(regional_trend_samples, aes(group=period))+
-  geom_hline(yintercept = 0, col = "gray80", linewidth = 2)+
+  geom_hline(yintercept = 0)+
   geom_violin(aes(y = trend, x = period),
               fill = "grey40",col = "black",
               alpha = 0.5,
               draw_quantiles = c(0.025,0.5,0.975))+
   xlab("")+
-  ylab("Trend (% change per year)")+
+  ylab("Trend\n(% change per year)")+
   #ggtitle("Posterior estimate of\nregional population trend")+
-  coord_cartesian(ylim=c(-2,5.5))
+  coord_cartesian(ylim=c(-10,10))
 trend_violin_plot
 
-ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_3periods.png", plot=trend_violin_plot, 
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trend_violinplot_4periods.png", plot=trend_violin_plot, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
-# trajectory + violin trend ----
+# trajectory + 5 yr trend + violin trend ----
 
 p1 <- regional_trajectory_plot + annotate("text", label = "A", x=-Inf, y=Inf, vjust=2, hjust=-1, size=8)
-p2 <- trend_violin_plot + annotate("text", label = "B", x=-Inf, y=Inf, vjust=2, hjust=-1, size=8)
+p2 <- trend_5.yr + annotate("text", label = "B", x=-Inf, y=Inf, vjust=2, hjust=-1, size=8)
+p3 <- trend_violin_plot + annotate("text", label = "C", x=-Inf, y=Inf, vjust=2, hjust=-1, size=8)
 
-p <- p1|p2
+p <- p1/p2/p3
 p
 
 ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trajectory.plus.trends.png", plot=p, 
-       device="png", dpi=300, units="cm", width=30, height=15)
+       device="png", dpi=300, units="cm", width=20, height=30)
 
 # Wed Feb 14 10:55:02 2024 ------------------------------
 
