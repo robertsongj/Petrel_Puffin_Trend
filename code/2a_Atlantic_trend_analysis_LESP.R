@@ -17,6 +17,8 @@ library(scales)    # for plotting
 library(here)      # for sanity
 library(patchwork) # for stacking plots real nice
 library(mapview) # for quick looks at spatial data
+library(sf) # for maps
+library(ggspatial) # for maps
 
 rm(list=ls())
 
@@ -47,22 +49,16 @@ CustomTheme <- theme_update(legend.key = element_rect(colour = NA),
 
 # Load and manipulate dataset ----
 
-
-load(here("input", "Atlantic LHSP colonies clean.RData"))
+load(here("input", "Atlantic LESP colonies clean.RData"))
 
 # align variables with original code
 
-spdat <- mydf
-
 names(spdat) <- tools::toTitleCase(names(spdat))
 
-names(spdat)[names(spdat)=="Sd"] <-  "SE"
-
-mycountry <- "Canada"
-
-spdat <- spdat[spdat$Country == mycountry,]
-
-spdat <- subset(spdat, Year >= 1970)
+# Tables that link year index to actual year
+spdat$year_numeric <- spdat$Year - min(spdat$Year) + 1
+year_table = data.frame(Year = min(spdat$Year):max(spdat$Year))
+year_table$year_numeric = 1:nrow(year_table)
 
 colonies_to_include = spdat %>%
   group_by(Colony) %>%
@@ -72,8 +68,7 @@ colonies_to_include = spdat %>%
             last_survey = max(Year),
             n_surveys = length(unique(Year)))
 
-# Omit the smallest LESP colonies that are strongly influencing uncertainty
-# these seem to have already been removed
+# Omit the smallest colony (Machias Seal) that is strongly influencing uncertainty
 colonies_to_include = subset(colonies_to_include, mean_count > 1000)
 spdat = subset(spdat, Colony %in% colonies_to_include$Colony)
 
@@ -81,14 +76,7 @@ spdat = subset(spdat, Colony %in% colonies_to_include$Colony)
 spdat$colony_numeric <- as.integer(factor(spdat$Colony))
 colony_name_table = unique(spdat[,c("Colony","colony_numeric")])
 
-# Tables that link year index to actual year
-spdat$year_numeric <- spdat$Year - min(spdat$Year) + 1
-year_table = data.frame(Year = min(spdat$Year):max(spdat$Year))
-year_table$year_numeric = 1:nrow(year_table)
-
-
 # Plot raw data ----
-
 
 ggplot(data = spdat,aes(x = Year, y = Count))+
   geom_point()+
@@ -208,9 +196,9 @@ out$mcmc.info$elapsed.mins
 # Which parameters have not converged?
 unlist(out$Rhat)[which(unlist(out$Rhat)>1.1)]
 # and how bad are we off?
-mean(unlist(out$Rhat)[which(unlist(out$Rhat)>1.1)])#1.16
+mean(unlist(out$Rhat)[which(unlist(out$Rhat)>1.1)])#1.14
 hist(unlist(out$Rhat)[which(unlist(out$Rhat)>1.1)])
-# just one parameter >1.3, and two >1.2, the rest are between 1.1-1.2
+# most are between 1.1-1.2
 
 # Which parameters have effective sample sizes less than 1000?
 n.eff <- unlist(out$n.eff)
@@ -328,8 +316,8 @@ temp<- subset(fit_samples_colony, samp %in% samples_to_plot)
 # we're going to try showing all years
 # Choose years that are considered "the most reliable" for summarizing trends
 # (i.e., the year range where surveys are available at the largest colonies)
-t_start <- min(annual_summary_colony$Year)
-t_end <- 2023
+#t_start <- min(annual_summary_colony$Year)
+#t_end <- 2023
 
 # we should re-order the colonies by latitude rather than alphabetical so that
 # colonies geographically closer together are shown together
@@ -350,28 +338,34 @@ colonies_to_include$lat <- NA
 colonies_to_include$lat[1] <- coords$Latitude[coords$Colony=="Baccalieu Island"]
 colonies_to_include$lat[2] <- coords$Latitude[coords$Colony=="Bon Portage Island"]
 colonies_to_include$lat[3] <- coords$Latitude[coords$Colony=="Coleman Island, Wadham Islands"]
-colonies_to_include$lat[4] <- coords$Latitude[coords$Colony=="Great Island (Witless Bay)"]
-colonies_to_include$lat[5] <- coords$Latitude[coords$Colony=="Green Island (Fortune Bay)"]
-colonies_to_include$lat[6] <- coords$Latitude[coords$Colony=="Gull Island (Witless Bay)"]
-colonies_to_include$lat[7] <- coords$Latitude[coords$Colony=="Kent Island (Grand Manan Archipelago)"]
-colonies_to_include$lat[8] <- coords$Latitude[coords$Colony=="Middle Lawn Island"]
-colonies_to_include$lat[9] <- coords$Latitude[coords$Colony=="Small Island, Wadham Islands"]
-colonies_to_include$lat[10] <- coords$Latitude[coords$Colony=="Penguin Island, South"]
+colonies_to_include$lat[4] <- coords$Latitude[coords$Colony=="Country Island"]
+colonies_to_include$lat[5] <- coords$Latitude[coords$Colony=="Great Island (Witless Bay)"]
+colonies_to_include$lat[6] <- coords$Latitude[coords$Colony=="Green Island (Fortune Bay)"]
+colonies_to_include$lat[7] <- coords$Latitude[coords$Colony=="Gull Island (Witless Bay)"]
+colonies_to_include$lat[8] <- coords$Latitude[coords$Colony=="Kent Island (Grand Manan Archipelago)"]
+colonies_to_include$lat[9] <- coords$Latitude[coords$Colony=="Little White Island"]
+colonies_to_include$lat[10] <- coords$Latitude[coords$Colony=="Middle Lawn Island"]
+colonies_to_include$lat[11] <- coords$Latitude[coords$Colony=="Small Island, Wadham Islands"]
+colonies_to_include$lat[12] <- coords$Latitude[coords$Colony=="Penguin Island, South"]
+
 colonies_to_include$lon <- NA
 colonies_to_include$lon[1] <- coords$Longitude[coords$Colony=="Baccalieu Island"]
 colonies_to_include$lon[2] <- coords$Longitude[coords$Colony=="Bon Portage Island"]
 colonies_to_include$lon[3] <- coords$Longitude[coords$Colony=="Coleman Island, Wadham Islands"]
-colonies_to_include$lon[4] <- coords$Longitude[coords$Colony=="Great Island (Witless Bay)"]
-colonies_to_include$lon[5] <- coords$Longitude[coords$Colony=="Green Island (Fortune Bay)"]
-colonies_to_include$lon[6] <- coords$Longitude[coords$Colony=="Gull Island (Witless Bay)"]
-colonies_to_include$lon[7] <- coords$Longitude[coords$Colony=="Kent Island (Grand Manan Archipelago)"]
-colonies_to_include$lon[8] <- coords$Longitude[coords$Colony=="Middle Lawn Island"]
-colonies_to_include$lon[9] <- coords$Longitude[coords$Colony=="Small Island, Wadham Islands"]
-colonies_to_include$lon[10] <- coords$Longitude[coords$Colony=="Penguin Island, South"]
+colonies_to_include$lon[4] <- coords$Longitude[coords$Colony=="Country Island"]
+colonies_to_include$lon[5] <- coords$Longitude[coords$Colony=="Great Island (Witless Bay)"]
+colonies_to_include$lon[6] <- coords$Longitude[coords$Colony=="Green Island (Fortune Bay)"]
+colonies_to_include$lon[7] <- coords$Longitude[coords$Colony=="Gull Island (Witless Bay)"]
+colonies_to_include$lon[8] <- coords$Longitude[coords$Colony=="Kent Island (Grand Manan Archipelago)"]
+colonies_to_include$lon[9] <- coords$Longitude[coords$Colony=="Little White Island"]
+colonies_to_include$lon[10] <- coords$Longitude[coords$Colony=="Middle Lawn Island"]
+colonies_to_include$lon[11] <- coords$Longitude[coords$Colony=="Small Island, Wadham Islands"]
+colonies_to_include$lon[12] <- coords$Longitude[coords$Colony=="Penguin Island, South"]
 
 mapview(st_as_sf(colonies_to_include,coords = c("lon", "lat"),crs=4326))
 
-# order the colonies by latitude
+# add province labels (make island of newfoundland NF so we can be consistent with ATPU where we have labrador that will be LAB)
+
 # Convert Colony to factor ordered by latitude (north to south)
 colonies_to_include$Colony <- factor(colonies_to_include$Colony, levels = colonies_to_include$Colony[order(-colonies_to_include$lat)])
 # Check the factor levels
@@ -380,35 +374,29 @@ levels(colonies_to_include$Colony)
 colonies_to_include <- colonies_to_include %>%
   arrange(desc(lat), Colony)
 
-# add province labels (make island of newfoundland NF so we can be consistent with ATPU where we have labrador that will be LAB)
-colonies_to_include$Prov <- NA
-colonies_to_include$Prov[1:8] <- "NF"
-colonies_to_include$Prov[9] <- "NB"
-colonies_to_include$Prov[10] <- "NS"
-colonies_to_include$Colony.Prov <- paste0(colonies_to_include$Colony, ", ", colonies_to_include$Prov)
-
-# Convert Colony to factor ordered by latitude (north to south)
-colonies_to_include$Colony.Prov <- factor(colonies_to_include$Colony.Prov, levels = colonies_to_include$Colony.Prov[order(-colonies_to_include$lat)])
-# Check the factor levels
-levels(colonies_to_include$Colony.Prov)
-# Reorder the dataframe
-colonies_to_include <- colonies_to_include %>%
-  arrange(desc(lat), Colony.Prov)
-
 # Extract unique Colony levels from the first dataframe
-ordered_levels <- levels(colonies_to_include$Colony.Prov)
+ordered_levels <- levels(colonies_to_include$Colony)
 
-# now add these to annual_summaries_colony and fit_samples_colony by matching to Colony
+# now add these to annual_summaries_colony and fit_samples_colony and spdat by matching to Colony
 annual_summary_colony <- annual_summary_colony %>% left_join(colonies_to_include, by="Colony")
-annual_summary_colony$Colony.Prov <- factor(annual_summary_colony$Colony.Prov, levels = ordered_levels)
-levels(annual_summary_colony$Colony.Prov) # great
-summary(annual_summary_colony$Colony.Prov)
+annual_summary_colony$Colony <- factor(annual_summary_colony$Colony, levels = ordered_levels)
+levels(annual_summary_colony$Colony) # great
+summary(annual_summary_colony$Colony)
 
 fit_samples_colony <- fit_samples_colony %>% left_join(colonies_to_include, by="Colony")
-fit_samples_colony$Colony.Prov <- factor(fit_samples_colony$Colony.Prov, levels = ordered_levels)
-levels(fit_samples_colony$Colony.Prov) # great
-summary(fit_samples_colony$Colony.Prov)
+fit_samples_colony$Colony <- factor(fit_samples_colony$Colony, levels = ordered_levels)
+levels(fit_samples_colony$Colony) # great
+summary(fit_samples_colony$Colony)
 str(fit_samples_colony)
+
+spdat <- spdat %>% left_join(colonies_to_include, by="Colony")
+spdat$Colony <- factor(spdat$Colony, levels = ordered_levels)
+levels(spdat$Colony) # great
+summary(spdat$Colony)
+str(spdat)
+
+samples_to_plot <- as.factor(samples_to_plot)
+fit_samples_colony$samp <- as.factor(fit_samples_colony$samp)
 
 # Create plot of colony trajectories, overlaid with raw data
 colony_trajectory_plot <- ggplot()+
@@ -424,20 +412,15 @@ colony_trajectory_plot <- ggplot()+
   
   # Plot 1000 trajectories from Bayesian posterior
   geom_line(data = subset(fit_samples_colony, 
-                          samp %in% samples_to_plot & 
-                            Year >= t_start & 
-                            Year <= t_end), 
+                          samp %in% samples_to_plot), 
             aes(x = Year, y = N_pred, col = factor(samp)),alpha = 0.1)+
   
   # Thick line for posterior median
-  geom_line(data = subset(annual_summary_colony, 
-                          Year >= t_start & 
-                            Year <= t_end), 
+  geom_line(data = annual_summary_colony, 
             aes(x = Year, y= N_med), linewidth = 1, col = "black")+
   
   # Thick dashed line for 95% CI
-  geom_ribbon(data = subset(annual_summary_colony,Year >= t_start & 
-                              Year <= t_end), 
+  geom_ribbon(data = annual_summary_colony, 
               aes(x = Year, ymin=N_q025, ymax = N_q975),
               fill = "transparent", col = "black", 
               linetype = 2, linewidth = 0.5)+
@@ -500,6 +483,9 @@ ylim = fit_samples_regional %>%
   summarize(min = 0,
             max = max(N_pred))
 
+# turn off scientific notation
+options(scipen=999)
+
 # Create plot of regional trajectory
 regional_trajectory_plot <- ggplot()+
   
@@ -517,30 +503,30 @@ regional_trajectory_plot <- ggplot()+
                           samp %in% samples_to_plot & 
                             Year >= t_start & 
                             Year <= t_end), 
-            aes(x = Year, y = N_pred, col = factor(samp)),alpha = 0.1)+
+            aes(x = Year, y = N_pred/1000000, col = factor(samp)),alpha = 0.1)+
   
   # Thick darkblue line for posterior median
   geom_line(data = subset(annual_summary_regional, 
                           Year >= t_start & 
                             Year <= t_end), 
-            aes(x = Year, y= N_med), linewidth = 1, col = "black")+
+            aes(x = Year, y= N_med/1000000), linewidth = 1, col = "black")+
   
   # Thick darkblue dashed line for 95% CI
   geom_ribbon(data = subset(annual_summary_regional,Year >= t_start & 
                               Year <= t_end), 
-              aes(x = Year, ymin=N_q025, ymax = N_q975),
+              aes(x = Year, ymin=N_q025/1000000, ymax = N_q975/1000000),
               fill = "transparent", col = "black", 
               linetype = 2, linewidth = 0.5)+
   
-  coord_cartesian(ylim = c(ylim$min,ylim$max))+
+  #coord_cartesian(ylim = c(ylim$min/1000000,ylim$max/1000000))+
   
-  scale_y_continuous(labels = comma)+
-  scale_x_continuous(limits=c(t_start,t_end), breaks = seq(1970, 2020, by = 10), expand = c(0, 0))+
+  scale_y_continuous(limits = c(0, 16), breaks = seq(0, 15, by = 5)) +
+  scale_x_continuous(limits=c(1966,2023), breaks = seq(1970, 2020, by = 10), expand = c(0, 0))+
   
   scale_color_manual(values=rep("grey50",length(unique(fit_samples_regional$samp))), 
                      guide = "none")+
   
-  ylab("Index of Abundance")
+  ylab("Index of Abundance\n(millions)")
 
 regional_trajectory_plot
 
@@ -573,7 +559,7 @@ trend_5.yr <- ggplot()+
               fill = "transparent", col = "black", 
               linetype = 2, linewidth = 0.5)+
   geom_hline(yintercept=0) +
-  scale_x_continuous(limits=c(1973,2023), breaks = seq(1970, 2020, by = 10),expand = c(0, 0))+
+  scale_x_continuous(limits=c(1966,2023), breaks = seq(1970, 2020, by = 10),expand = c(0, 0))+
   ylab("5-year Trend\n(% change per year)")
 trend_5.yr
 ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_5.yr.windows.png", plot=trend_5.yr, 
@@ -768,7 +754,7 @@ trend_violin_plot <- ggplot(regional_trend_samples, aes(group=period))+
   xlab("")+
   ylab("Trend\n(% change per year)")+
   #ggtitle("Posterior estimate of\nregional population trend")+
-  coord_cartesian(ylim=c(-5,10))
+  coord_cartesian(ylim=c(-6,12))
 trend_violin_plot
 
 ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trend_violinplot_3periods.png", plot=trend_violin_plot, 
@@ -785,6 +771,15 @@ p
 
 ggsave(filename="output/figures/trajectory_and_trend_plots/LESP_trajectory.plus.trends.png", plot=p, 
        device="png", dpi=300, units="cm", width=20, height=30)
+
+# saving ----
+
+# save the workspace
+save.image("input/LESP_2a_workspace_04.29.2024")
+
+# save the "colonies to include" dataframe for mapping along with puffins
+write.csv(colonies_to_include, "input/LESP_recent.counts.coords.csv", row.names = FALSE)
+
 
 # Wed Feb 14 10:55:02 2024 ------------------------------
 
