@@ -1,0 +1,99 @@
+﻿Colony,Lat,Lon,Country,Province/Territory/State,Year,Colony size (pairs),Lower 95% CI,Upper 95% CI,Individuals,Survey method,Source
+Pyramid Islands,56.44173,-60.60355,Canada,LB,1978,1,1,1,present,At least,Brown and Lock (1979)
+The Castle,56.35925,-60.6568,Canada,LB,1978,1,1,1,present,At least,Brown and Lock (1979)
+Negro Islands,56.35003,-60.54888,Canada,LB,1978,1,1,1,present,At least,Brown and Lock (1979)
+"Kidlit Islands, LB",56.21089,-60.47628,Canada,LB,1978,2200,2200,2200,4400,Ground count (method unknown),Brown and Lock (1979)
+"Ukallik Island, LB",56.20328,-60.60973,Canada,LB,1978,270,270,270,540,Ground count (method unknown),Brown and Lock (1979)
+"Nunaksuk Island, LB",56.05002,-60.46555,Canada,LB,1978,3400,3400,3400,6800,Unknown,Brown and Lock (1979)
+"Katauyak Island, LB",55.90002,-60.56556,Canada,LB,1978,110,110,110,220,Ground count (method unknown),Brown and Lock (1979)
+"Quaker Hat, LB",54.73689,-57.34298,Canada,LB,1978,2107,1013,3201,4214,Holes x occupancy rate,Elliot (1978)
+"Red Rock Point, uni N of",54.71664,-57.74882,Canada,LB,1978,1,1,1,present,At least,Brown and Lock (1979)
+"Tinker Island, nw, of Holten Island, LB",54.69721,-57.43492,Canada,LB,1978,1,1,1,present,At least,Brown and Lock (1979)
+"Bacalhao Island, LB",54.44997,-57.16547,Canada,LB,2010,33,33,33,66,Direct count,Wilhelm (2017)
+"East Big Island, LB",54.44996,-57.0988,Canada,LB,2002,22,2,44,44,Holes x occupancy rate,Robertson et al. (2002)
+"The Doughboy, uni e. of Pompey Island, LB",54.4333,-57.34881,Canada,LB,2002,174,101,246,348,Holes x occupancy rate,Robertson et al. (2002)
+"North Duck Islands, uni N of",54.4333,-57.18214,Canada,LB,1978,1,1,1,present,At least,Brown and Lock (1979)
+"North Duck Island, Groswater Bay",54.4179,-57.18232,Canada,LB,1978,1,1,1,present,At least,Brown and Lock (1979)
+"Puffin Islands (Lab), LB",54.41663,-57.38215,Canada,LB,2002,619,415,820,1238,Holes x occupancy rate,Robertson et al. (2002)
+"Tinker Island, nr. Indian Hr., LB",54.41663,-57.26548,Canada,LB,2010,5,2,9,10,Holes x occupancy rate,Wilhelm (2017)
+Tommy Rocks,54.41663,-57.09881,Canada,LB,1978,1,1,1,present,At least,Brown and Lock (1979)
+"North Green Island (Lab), LB",54.39997,-57.31548,Canada,LB,2010,4169,3483,4855,8338,Holes x occupancy rate,Wilhelm (2017)
+Herring Islands 1 (Red Island),54.3362,-57.09195,Canada,LB,2010,1972,1489,2455,3944,Holes x occupancy rate,Wilhelm (2017)
+Herring Islands 2 (Kipper Island),54.32579,-57.09448,Canada,LB,2010,8983,7990,9967,17966,Holes x occupancy rate,Wilhelm (2017)
+Herring Islands 3 (Sardine Island),54.3215,-57.11595,Canada,LB,2010,2245,1730,2760,4490,Holes x occupancy rate,Wilhelm (2017)
+Outer Gannet Island,54.00151,-56.53755,Canada,LB,2000,4054,2203,5905,8108,Holes x occupancy rate,Robertson et al. (2002)
+"Gannet Clusters, GC 1",53.94521,-56.5158,Canada,LB,1999,7815,6374,9256,15630,Holes x occupancy rate,Robertson et al. (2002)
+"Gannet Clusters, GC 2",53.94577,-56.50814,Canada,LB,2015,7066,4966,9166,14132,Holes x occupancy rate,Wilhelm (2017)
+"Gannet Clusters, GC 3",53.94227,-56.50676,Canada,LB,2018,422,,,844,Holes x occupancy rate,Robertson et al. (2002)
+"Gannet Clusters, GC 4",53.94097,-56.51401,Canada,LB,2015,6280,4140,8420,12560,Holes x occupancy rate,Wilhelm (2017)
+"Gannet Clusters, GC 6",53.94005,-56.56363,Canada,LB,2018,199,,,398,Holes x occupancy rate,Robertson et al. (2002)
+"Gannet Clusters, GC 5",53.93537,-56.52008,Canada,LB,2018,4582,2461,6703,9164,Holes x occupancy rate,Wilhelm (2017)
+"Bird Islands (Lab. S), LB",53.73328,-56.24879,Canada,LB,1978,8069,2073,14133,16138,Holes x occupancy rate,Elliot (1978)
+"Halfway Island, LB",53.69995,-56.19879,Canada,LB,1990,125,125,125,250,Approximate estimate,Wilhelm (2017)
+"Roundhill Island, LB",53.43327,-55.59878,Canada,LB,1990,3000,3000,3000,6000,Approximate estimate,Wilhelm (2017)
+"James Island, NF",50.92493,-57.1822,Canada,NF,1942,3,3,3,6,Unknown,Wilhelm (2017)
+"Rouge Island, NF",50.89992,-55.76552,Canada,NF,2001,125,125,125,250,Approximate estimate,Wilhelm (2017)
+"Hare Island (ST.JB), NF",50.8166,-57.1489,Canada,NF,1944,10,10,10,20,Unknown,Wilhelm (2017)
+"Red Island [N], NF",50.66658,-55.58218,Canada,NF,1988,500,500,500,1000,Approximate estimate,Wilhelm (2017)
+"Black Rock (Little Fogo Islands), NF",49.8107,-54.1062,Canada,NF,2017,1,1,1,present,At least,Wilhelm (2017)
+"Single Turr Cliff, NF",49.8185,-54.1137,Canada,NF,2014,3958,1805,6111,7916,Burrow density x occupancy rate x area,Wilhelm (2017)
+"Double Turr Cliff, NF",49.8169,-54.1114,Canada,NF,2014,5410,2744,8076,10820,Burrow density x occupancy rate x area,Wilhelm (2017)
+"Hennessey Island, NF",49.81583,-54.11538,Canada,NF,2014,677,554,801,1354,Holes x occupancy rate,Wilhelm (2017)
+"Bakeapple Island, NF",49.8155,-54.1127,Canada,NF,2014,2072,1296,2848,4144,Holes x occupancy rate,Wilhelm (2017)
+"Little Bakeapple 1, NF",49.81451,-54.11076,Canada,NF,2014,134,89,179,268,Holes x occupancy rate,Wilhelm (2017)
+"Grassy Island (Little Fogo Islands), NF",49.812,-54.1288,Canada,NF,2014,1,1,1,present,At least,Wilhelm (2017)
+"Puffin Island (Little Fogo Islands), NF",49.8104,-54.111,Canada,NF,2014,4125,2293,5957,8250,Burrow density x occupancy rate x area,Wilhelm (2017)
+"Grassy Hunts Island, NF",49.80976,-54.12691,Canada,NF,2014,1,1,1,present,At least,Wilhelm (2017)
+"Cellar Island, NF",49.821,-54.1224,Canada,NF,2012,150,150,150,300,Approximate estimate,"W. Montevecchi, unpublished data"
+"Pentons Island, NF",49.818,-54.0945,Canada,NF,2012,50,50,50,100,Approximate estimate,"W. Montevecchi, unpublished data"
+"Storehouse Island (Little Fogo Islands), NF",49.817,-54.1805,Canada,NF,2012,75,75,75,150,Approximate estimate,"W. Montevecchi, unpublished data"
+"Western Puffin Island, NF",49.8167,-54.1398,Canada,NF,2012,40,40,40,80,Approximate estimate,"W. Montevecchi, unpublished data"
+"Round Puffin Island, NF",49.8132,-54.1368,Canada,NF,2012,1000,1000,1000,2000,Approximate estimate,"W. Montevecchi, unpublished data"
+"Long Puffin Island, NF",49.8139,-54.1247,Canada,NF,2001,25,25,25,50,Aerial observation,Wilhelm (2017)
+"Short Puffin Island, NF",49.812,-54.1256,Canada,NF,2001,25,25,25,50,Aerial observation,Wilhelm (2017)
+"Little Storehouse Island, NF",49.8188,-54.1809,Canada,NF,1984,1,1,1,present,At least,Wilhelm (2017)
+"Funk Island, NF",49.75877,-53.17636,Canada,NF,2012,976,466,1485,1952,Burrow density x occupancy rate x area,Wilhelm (2017)
+"Small Island, Wadham Is, NF",49.57989,-53.77882,Canada,NF,2018,16859,9047,24671,33718,Burrow density x occupancy rate x area,Jenkins et al. unpublished report
+"Coleman Island, NF",49.5549,-53.8173,Canada,NF,2018,12649,1961,23337,25298,Burrow density x occupancy rate x area,Jenkins et al. unpublished report
+"Pigeon Island (NDB), NF",49.54823,-53.86882,Canada,NF,2018,22,22,22,present,At least,Jenkins et al. unpublished report
+"Penguin Island, South, NF",49.43322,-53.79049,Canada,NF,2018,8881,5332,12430,17762,Burrow density x occupancy rate x area,Jenkins et al. unpublished report
+"Gull Island, Cape Freels, NF",49.2564,-53.4296,Canada,NF,2018,9,9,9,18,Direct count,Jenkins et al. unpublished report
+"Cape Bonavista, uni E. of, NF",48.69988,-53.08215,Canada,NF,1975,120,120,120,240,Approximate estimate,Wilhelm (2017)
+"Little Denier Island, NF",48.68335,-53.592,Canada,NF,1975,500,500,500,1000,Approximate estimate,Wilhelm (2017)
+"Spillars Point, S of, NF",48.66818,-53.05302,Canada,NF,1985,250,250,250,500,Approximate estimate,Cairns et al. (1986)
+"North Bird Island, NF",48.63368,-53.01548,Canada,NF,2019,9391,4689,14093,18782,Burrow density x occupancy rate x area,"S. Wilhelm, unpubl. data"
+"Elliston Point Island, NF",48.62988,-53.01882,Canada,NF,1985,400,400,400,800,Approximate estimate,Cairns et al. (1986)
+"South Bird Island, NF",48.62477,-53.00906,Canada,NF,1985,1000,1000,1000,2000,Approximate estimate,Cairns et al. (1986)
+"Baccalieu Island, NF",48.11655,-52.79882,Canada,NF,2005,75000,75000,75000,150000,Approximate estimate,"Government of Newfoundland and Labrador, Fisheries and Land Resources (2019)"
+"Turr Island, Ramea Islands, NF",47.51272,-57.35512,Canada,NF,1984,65,65,65,130,Approximate estimate,Wilhelm (2017)
+"Ramea Columbier Island, NF",47.50607,-57.43491,Canada,NF,1989,75,75,75,150,Approximate estimate,Wilhelm (2017)
+"Gull Island (Witless Bay), NF",47.2622,-52.7737,Canada,NF,2023,168095,147498,188692,336190,Burrow density x occupancy rate x area,Wilhelm (2017)
+"Green Island (WB), NF",47.23825,-52.78007,Canada,NF,1979,9266,7513,11269,18532,Burrow density x occupancy rate x area,Cairns and Verspoor (1980)
+"Pee Pee Island, NF",47.19155,-52.83718,Canada,NF,2010,1850,1497,2203,3700,Holes x occupancy rate,Wilhelm (2017)
+"Great Island (Witless Bay), NF",47.18734,-52.81397,Canada,NF,2011,174491,147559,201423,348982,Burrow density x occupancy rate x area,Wilhelm et al. (2015)
+"Colombier Island (NE), NF",46.89081,-55.57283,Canada,NF,2014,25,25,25,50,Approximate estimate,Wilhelm (2017)
+"The Drook/Mistaken Point, NF",46.65822,-53.2322,Canada,NF,2005,40,40,40,80,Approximate estimate,"G. Robertson, unpubl. data"
+"Cape Pine Head, NF",46.62989,-53.50888,Canada,NF,2005,130,130,130,260,Approximate estimate,"G. Robertson, unpubl. data"
+"Bird Islands, NS",46.36617,-60.39474,Canada,NS,2009,365,365,365,730,Unknown,Wilhelm (2017)
+"Pearl Island, NS",44.38377,-64.04913,Canada,NS,2008,75,75,75,150,Approximate estimate,Wilhelm (2017)
+"Green Island 1, NS",43.68891,-66.14406,Canada,NS,2016,20,20,20,present,At least,Wilhelm (2017)
+"Ram Island (LH), NS",43.68431,-65.03027,Canada,NS,2006,3,3,3,6,Approximate estimate,Wilhelm (2017)
+"Round Island NS 1, NS",43.50578,-65.98543,Canada,NS,2018,45,45,45,90,Approximate estimate,Wilhelm (2017)
+"Mud Island, NS",43.48639,-65.98843,Canada,NS,2005,75,75,75,present,At least,Wilhelm (2017)
+"Noddy Island, NS",43.4647,-65.98472,Canada,NS,2018,50,50,50,100,Approximate estimate,Wilhelm (2017)
+"Green Island (CSI), NS",43.4204,-65.67671,Canada,NS,2012,10,10,10,20,Approximate estimate,Wilhelm (2017)
+"Machias Seal Island, NB",44.50182,-67.10187,Canada,NB,2019,8635,,,17270,,
+Ile du Corossol,50.09028224,-66.38623688,Canada,QC,2022,1,,,present,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2022
+Ile aux Perroquets,50.22071951,-64.2060596,Canada,QC,1997,18,,,36,provided by J-F Rail in ATPU_LESP_QC_2023.xls,ROBERGE 1999C
+Ile de la Maison,50.21796669,-64.20048468,Canada,QC,2000,568,,,1136,provided by J-F Rail in ATPU_LESP_QC_2023.xls,Y. TROUTET (COM. PERS.)
+Refuge de Betchouane,50.19654425,-63.20481479,Canada,QC,2022,416,,,832,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2022
+Refuge de baie des Loups,50.20501534,-60.2494144,Canada,QC,2022,378,,,756,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2022
+Refuge des îles aux Perroquets,50.2830581,-59.74047008,Canada,QC,2022,573,,,1146,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2022
+Refuge des îles Sainte-Marie,50.31473126,-59.65186987,Canada,QC,2022,1393,,,2786,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2022
+Refuge de la baie de Brador,51.38802842,-57.19899487,Canada,QC,2022,15277,,,30554,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2022
+Ile du 37,50.16487561,-60.18832499,Canada,QC,2015,2,,,4,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2015
+Iles Coconipi,50.23589988,-60.18160164,Canada,QC,1995,20,,,40,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 1995
+Refuge de Gros Mécatina,50.75135863,-58.81374615,Canada,QC,2022,29,,,58,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2022
+Ile Bonaventure,48.49502838,-64.16249056,Canada,QC,2018,3,,,6,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2018
+Ile Brion,47.78984818,-61.47301712,Canada,QC,2017,23,,,46,provided by J-F Rail in ATPU_LESP_QC_2023.xls,SCF 2017
+Rocher aux Oiseaux,47.83931513,-61.14660149,Canada,QC,2021,12,,,24,provided by J-F Rail in ATPU_LESP_QC_2023.xls,B. DROLET (COM. PERS.)
