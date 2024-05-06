@@ -344,6 +344,7 @@ trend_results <- read.csv("output/LESP_250simulations_0.65SE_trendresults.csv")
 
 mean(trend_results$cov) # credible interval coverage (proportion of estimated trend credible intervals containing the "true" trend)
 mean(trend_results$trend_est_q500 - trend_results$trend_true) # mean bias or accuracy (mean estimated trend is within x of true trend)
+summary(trend_results$trend_est_q500 - trend_results$trend_true)
 mean(trend_results$trend_est_q975 - trend_results$trend_est_q025) # precision (mean size of 95% credible interval)
 # what proportion of trend estimates are the wrong sign based on the credible interval being entirely positive or negative?
 (sum((trend_results$trend_true > 0 & trend_results$trend_est_q975 < 0) |
@@ -375,7 +376,7 @@ trend_plot <- ggplot(data = trend_results, aes(x = trend_true, y = trend_est_q50
                                                             ymin = trend_est_q025, ymax = trend_est_q975),color=col_pal[2])+
   geom_errorbar(data = subset(trend_results, cov_f=="No"), aes(x = trend_true, y = trend_est_q500, 
                                                                 ymin = trend_est_q025, ymax = trend_est_q975), color=col_pal[2],width=0)+
-  coord_cartesian(ylim=c(-7,7),xlim=c(-7,7))+
+  coord_cartesian(ylim=c(-4,7),xlim=c(-4,7))+
   theme_bw()+
   xlab("True (Simulated) Regional Trend")+
   ylab("Estimated Regional Trend")+

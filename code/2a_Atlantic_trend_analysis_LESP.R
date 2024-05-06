@@ -228,24 +228,31 @@ RMSE_df = data.frame(actual = out$sims.list$RMSE_actual, simulated = out$sims.li
 PostPredCheckPlot <- ggplot(data = RMSE_df,
                 aes(x = actual, y = simulated )) +
   geom_hex(binwidth = diff(lim)/50) +
-  scale_fill_gradientn(colors = c("gray95","darkblue"), name = "Number of\nsimulated\ndatasets") +
-  geom_abline(intercept = 0, slope = 1)+
+  scale_fill_gradientn(colors = c("gray95","darkblue"), name = "Number of\nsimulated\ndatasets\n") +
+  geom_abline(intercept = 0, slope = 1, linetype="dashed")+
   coord_cartesian(xlim = lim,ylim=lim)+
-  ggtitle(paste0("Posterior predictive check: \n\nBayesian p-value = ",Bayesian_pval))+
-  xlab("RMSE (actual datasets)")+
-  ylab("RMSE (simulated datasets)")+
-  theme_bw()
+  xlab("RMSE Actual Datasets")+
+  ylab("RMSE Simulated Datasets")+
+  theme_bw() + 
+  theme(axis.title.y = element_text(margin = margin(0,10,0,0),size=14),
+        axis.title.x = element_text(margin = margin(10,0,0,0),size=14),
+        axis.text.y = element_text(size=12),
+        axis.text.x = element_text(size=12),
+        legend.spacing.y = unit(1, "mm"), legend.direction="vertical",
+        legend.box="vertical",
+        legend.box.background = element_rect(color = "black",fill = "white"),
+        legend.box.margin = margin(0.4,0.4,0.4,0.4,"cm"),
+        legend.background = element_rect(color = "white"),
+        legend.text = element_text(size=12),
+        legend.title = element_text(size=14))
 
 PostPredCheckPlot
 
-png(paste0("output/figures/goodness_of_fit/LESP_PPC.png"), width = 6, height = 4, units = "in", res = 600)
-print(PostPredCheckPlot)
-dev.off()
-
+ggsave(filename="output/figures/goodness_of_fit/LESP_PPC.png", plot=PostPredCheckPlot, 
+       device="png", dpi=300, units="cm", width=20, height=15)
 
 # Plot observed counts versus estimated annual indices at each colony
 # Do they track the 1:1 line?
-
 
 # Estimates of SE for each survey (fills in missing ones)
 spdat$SE_est = out$mean$survey_SE
@@ -269,23 +276,26 @@ annual_summary_colony <- annual_summary_colony %>% full_join(spdat)
 ObsPredPlot <- ggplot(annual_summary_colony, 
        aes(x = Count, xmin = Count - 1.96*SE_est, xmax = Count + 1.96*SE_est, 
            y = q50, ymin = q025, ymax = q975, 
-           col = Colony))+
-  geom_abline(slope = 1, intercept = 0)+
+           col = as.factor(Colony)))+
+  geom_abline(slope = 1, intercept = 0, linetype="dashed")+
   geom_point()+
   geom_errorbar(width=0)+
   geom_errorbarh(height=0)+
-  xlab("Observed Count")+
-  ylab("Estimated Population Index")+
+  scale_colour_manual(values=viridis::plasma(length(unique(annual_summary_colony$Colony)))) +
+  xlab("Observed Count (log-scale)")+
+  ylab("Estimated Population Index (log-scale)")+
   scale_y_continuous(trans="log10", labels = comma)+
   scale_x_continuous(trans="log10", labels = comma)+
-  ggtitle("Predicted annual indices vs observed counts\n\n(Note that axes are on a log scale)") +
-  theme(legend.position="none")
+  theme(legend.position="none") +
+  theme(axis.title.y = element_text(margin = margin(0,10,0,0),size=14),
+        axis.title.x = element_text(margin = margin(10,0,0,0),size=14),
+        axis.text.y = element_text(size=12),
+        axis.text.x = element_text(size=12))
 
 ObsPredPlot
 
-png(paste0("output/figures/goodness_of_fit/LESP_Obs_vs_Pred.png"), width = 8, height = 6, units = "in", res = 600)
-print(ObsPredPlot)
-dev.off()
+ggsave(filename="output/figures/goodness_of_fit/LESP_Obs_vs_Pred.png", plot=ObsPredPlot, 
+       device="png", dpi=300, units="cm", width=20, height=20)
 
 # results and plotting ----
 
