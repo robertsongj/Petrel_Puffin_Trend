@@ -200,9 +200,9 @@ out$mcmc.info$elapsed.mins
 # Which parameters have not converged?
 unlist(out$Rhat)[which(unlist(out$Rhat)>1.1)]
 # and how bad are we off?
-mean(unlist(out$Rhat)[which(unlist(out$Rhat)>1.1)])#1.19
+mean(unlist(out$Rhat)[which(unlist(out$Rhat)>1.1)])#1.13
 hist(unlist(out$Rhat)[which(unlist(out$Rhat)>1.1)], breaks=15)
-# one parameter >3, and two >1.3, the rest are between 1.1-1.2
+# all between 1.1-1.5
 
 # Which parameters have effective sample sizes less than 1000?
 n.eff <- unlist(out$n.eff)
@@ -338,7 +338,7 @@ temp<- subset(fit_samples_colony, samp %in% samples_to_plot)
 # we should re-order the colonies by latitude rather than alphabetical so that
 # colonies geographically closer together are shown together
 
-coords = read_xlsx("data/ATPU_colony_coordinates.xlsx", sheet = 1) %>%
+coords = read.csv("data/ATPU_colony_coordinates_for.maps.csv") %>%
   subset(!is.na(Lat)&!is.na(Lon)) %>%
   st_as_sf(coords = c("Lon", "Lat"),crs=4326, remove = FALSE) %>%
   subset(Country %in% c("Canada"))
@@ -447,18 +447,20 @@ geom_line(data = subset(fit_samples_colony,
   geom_point(data = spdat, aes(x = Year, y = Count), size = 2)+
   geom_errorbar(data = spdat, aes(x = Year, ymin = Count-1.96*SE_est, ymax = Count+1.96*SE_est), width = 0, linewidth = 1)+
   geom_point(data = subset(spdat, is.na(SE)), aes(x = Year, y = Count), size = 5, shape=1)+
-  
-  scale_y_continuous(labels = comma)+
-  scale_x_continuous(limits=c(1965,2023), expand=c(0,0)) +  scale_color_manual(values=rep("grey50",length(unique(fit_samples_colony$samp))), 
+  #geom_blank(data = limits_df, aes(x=x, y=y_max)) +
+  scale_x_continuous(limits=c(1965,2023), expand=c(0,0)) +  
+  scale_y_continuous(labels = comma) +
+  scale_color_manual(values=rep("grey50",length(unique(fit_samples_colony$samp))), 
                      guide = "none")+
   
   ylab("Index of Abundance") +
-  facet_wrap(~Colony, scales = "free_y", ncol=3)
+  facet_wrap(~Colony, ncol=3, scales = "free_y") 
 
 colony_trajectory_plot
 
 ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trajectory_colony_all.years.png", plot=colony_trajectory_plot, 
        device="png", dpi=300, units="cm", width=30, height=40)
+
 
 
 # *regional----

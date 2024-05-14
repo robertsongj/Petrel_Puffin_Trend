@@ -11,6 +11,7 @@ lapply(my_packs, require, character.only = TRUE)
 rm(list=ls())
 
 library(viridis)
+library(ggplot2)
 # Plot theme ----
 
 # Custom theme for plotting
@@ -42,7 +43,9 @@ CustomTheme <- theme_update(panel.grid.major = element_line(colour = 'transparen
 
 
 
-# 1: Simulate an entire 50-year time series for each of 9 colonies ----
+# 1: Simulate an entire 50-year time series for each of 15 colonies ----
+
+start_time <- Sys.time()
 
 trend_results <- data.frame()
 
@@ -52,7 +55,7 @@ for (run in 1:250){
   
   set.seed(run)
   
-  ncolony <- 9
+  ncolony <- 15
   nyears <- 50
   
   N_matrix <- matrix(NA,nrow=ncolony,ncol = nyears)
@@ -333,22 +336,29 @@ trend_results <- rbind(trend_results,data.frame(run = run,
                                                 n_counts_w_SE = length(which(!is.na(spdat$SE)))))
 }
 
-# save the trend_results dataframe
-write.csv(trend_results, "output/LESP_250simulations_allSE_trendresults.csv", row.names = FALSE)
-write.csv(trend_results, "output/LESP_250simulations_0.65SE_trendresults.csv", row.names = FALSE)
+end_time <- Sys.time()
+elapsed_time <- end_time - start_time
+cat("Elapsed time:", elapsed_time, "\n")
 
+# save the trend_results dataframe
+#write.csv(trend_results, "output/LESP_250simulations_allSE_trendresults.csv", row.names = FALSE)
+#write.csv(trend_results, "output/LESP_250simulations_0.65SE_trendresults.csv", row.names = FALSE)
+write.csv(trend_results, "output/LESP_250simulations_0.65SE_15colonies_trendresults.csv", row.names = FALSE)
+# Elapsed time: 21.46644 
 
 # 7:Summarize and plot results across repeated simulations ----
 # load saved .csv from here if just plotting results
-trend_results <- read.csv("output/LESP_250simulations_0.65SE_trendresults.csv")
+trend_results <- read.csv("output/LESP_250simulations_0.65SE_15colonies_trendresults.csv")
 
 mean(trend_results$cov) # credible interval coverage (proportion of estimated trend credible intervals containing the "true" trend)
 mean(trend_results$trend_est_q500 - trend_results$trend_true) # mean bias or accuracy (mean estimated trend is within x of true trend)
+sd(trend_results$trend_est_q500 - trend_results$trend_true)
 summary(trend_results$trend_est_q500 - trend_results$trend_true)
 mean(trend_results$trend_est_q975 - trend_results$trend_est_q025) # precision (mean size of 95% credible interval)
 # what proportion of trend estimates are the wrong sign based on the credible interval being entirely positive or negative?
 (sum((trend_results$trend_true > 0 & trend_results$trend_est_q975 < 0) |
       (trend_results$trend_true < 0 & trend_results$trend_est_q025 > 0)))/nrow(trend_results)*100
+
 
 # make coverage a factor
 trend_results$cov_f <- factor(trend_results$cov, labels = c("No", "Yes"))
@@ -396,8 +406,17 @@ trend_plot <- ggplot(data = trend_results, aes(x = trend_true, y = trend_est_q50
         legend.position=c(0.15,0.8))
 trend_plot
 
-ggsave(filename="output/figures/goodness_of_fit/LESP_250simulations_0.65SE_trendresults.png", plot=trend_plot, 
+ggsave(filename="output/figures/goodness_of_fit/LESP_250simulations_0.65SE_15colonies_trendresults.png", plot=trend_plot, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
+# is there a relationship between true trend and estimated trend accuracy?
+trend_results$accuracy <- trend_results$trend_est_q500 - trend_results$trend_true
+ggplot(data=subset(trend_results, trend_true<8), aes(x=abs(accuracy), y=abs(trend_true))) + 
+  geom_point() + 
+  geom_smooth(method="lm") +
+  coord_cartesian(ylim = c(0,7), xlim = c(0,3))
+summary(lm(abs(trend_true) ~ abs(accuracy), data = subset(trend_results, trend_true<8)))
+# positive relationship with slope of 0.97 and adjusted r-squared of 0.27, probably worth reporting?
+
 # and what about the simulated datasets themselves?
-summary(trend_results$n_counts) #median of 35 counts, min of 23 and max of 49
+summary(trend_results$n_counts) #median of 60 counts, min of 42 and max of 75

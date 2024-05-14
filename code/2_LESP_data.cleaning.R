@@ -1,9 +1,9 @@
 library(tidyverse)
 library(readxl) 
 
-# cleaning up the ATPU excel to match the LESP input file format
+# create LESP input file format
 
-spdat = read_xlsx("data/LESP_trend_data.xlsx", sheet = 1) %>%
+spdat = read_xlsx("data/LESP_trend_data_SEGupdate.xlsx", sheet = 1) %>%
   dplyr::rename(Count = `Mature individuals`)
 
 # Calculate SE for counts with upper and lower confidence limit but no SE
