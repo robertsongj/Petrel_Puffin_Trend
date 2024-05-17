@@ -355,6 +355,7 @@ mean(trend_results$trend_est_q500 - trend_results$trend_true) # mean bias or acc
 sd(trend_results$trend_est_q500 - trend_results$trend_true)
 summary(trend_results$trend_est_q500 - trend_results$trend_true)
 mean(trend_results$trend_est_q975 - trend_results$trend_est_q025) # precision (mean size of 95% credible interval)
+sd(trend_results$trend_est_q975 - trend_results$trend_est_q025)
 # what proportion of trend estimates are the wrong sign based on the credible interval being entirely positive or negative?
 (sum((trend_results$trend_true > 0 & trend_results$trend_est_q975 < 0) |
       (trend_results$trend_true < 0 & trend_results$trend_est_q025 > 0)))/nrow(trend_results)*100
@@ -409,14 +410,39 @@ trend_plot
 ggsave(filename="output/figures/goodness_of_fit/LESP_250simulations_0.65SE_15colonies_trendresults.png", plot=trend_plot, 
        device="png", dpi=300, units="cm", width=20, height=20)
 
-# is there a relationship between true trend and estimated trend accuracy?
-trend_results$accuracy <- trend_results$trend_est_q500 - trend_results$trend_true
-ggplot(data=subset(trend_results, trend_true<8), aes(x=abs(accuracy), y=abs(trend_true))) + 
+# is there a relationship between true trend and estimated trend bias?
+trend_results$bias <- trend_results$trend_est_q500 - trend_results$trend_true
+ggplot(data=subset(trend_results, trend_true<8), aes(x=abs(bias), y=abs(trend_true))) + 
   geom_point() + 
   geom_smooth(method="lm") +
   coord_cartesian(ylim = c(0,7), xlim = c(0,3))
-summary(lm(abs(trend_true) ~ abs(accuracy), data = subset(trend_results, trend_true<8)))
+summary(lm(abs(trend_true) ~ abs(bias), data = subset(trend_results, trend_true<8)))
 # positive relationship with slope of 0.97 and adjusted r-squared of 0.27, probably worth reporting?
+# and precision?
+trend_results$precision <- trend_results$trend_est_q975 - trend_results$trend_est_q025
+ggplot(data=subset(trend_results, trend_true<8), aes(x=abs(precision), y=abs(trend_true))) + 
+  geom_point() + 
+  geom_smooth(method="lm")
+summary(lm(abs(trend_true) ~ abs(precision), data = subset(trend_results, trend_true<8)))
 
 # and what about the simulated datasets themselves?
 summary(trend_results$n_counts) #median of 60 counts, min of 42 and max of 75
+sd(trend_results$n_counts)
+# out of a maximum possible of 750 counts
+15*50
+summary(trend_results$n_counts/750)
+sd(trend_results$n_counts/750)
+# so we had a median of 8% of possible survey years with counts, but it ranged from 5.6 - 10%
+
+# is there a relationship between the number of surveys and precision?
+ggplot(data=trend_results, aes(x=precision, y=n_counts)) + 
+  geom_point() + 
+  geom_smooth(method="lm") 
+summary(lm(n_counts ~ precision, data = trend_results))
+# not really, which is cool
+# what about bias?
+ggplot(data=trend_results, aes(x=abs(bias), y=n_counts)) + 
+  geom_point() + 
+  geom_smooth(method="lm") 
+summary(lm(n_counts ~ abs(bias), data = trend_results))
+# nope.

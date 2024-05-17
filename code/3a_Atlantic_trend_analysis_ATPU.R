@@ -11,6 +11,7 @@ library(scales)    # for plotting
 library(here)      # for sanity
 library(patchwork) # for stacking plots real nice
 library(mapview) # for quick looks at spatial data
+library(sf)
 
 rm(list=ls())
 
@@ -461,6 +462,59 @@ colony_trajectory_plot
 ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trajectory_colony_all.years.png", plot=colony_trajectory_plot, 
        device="png", dpi=300, units="cm", width=30, height=40)
 
+
+# really want to get the y axes to shrink to have a max of just a fraction more than the upper CI
+# but facet_wrap doesn't play nice with specifying different axes limits
+# what if I plotted each colony separately in a loop, then stitched them all back together...
+colonies <- unique(spdat$Colony)
+# make a list to save the plots to
+plot_list <- list()
+
+for(i in 1:length(colonies)){
+  a <- subset(fit_samples_colony, Colony==colonies[i])
+  b <- subset(annual_summary_colony, Colony==colonies[i])
+  c <- subset(spdat, Colony==colonies[i])
+  
+  p <- ggplot()+
+    geom_line(data = subset(a,samp %in% samples_to_plot), 
+              aes(x = Year, y = N_pred, group=factor(samp)),color="grey50", alpha = 0.1)+
+    geom_line(data = b, 
+              aes(x = Year, y= N_med), linewidth = 1, col = "black")+
+    geom_ribbon(data = b, 
+                aes(x = Year, ymin=N_q025, ymax = N_q975),
+                fill = "transparent", col = "black", 
+                linetype = 2, linewidth = 0.5)+
+    geom_point(data = c, aes(x = Year, y = Count), size = 2)+
+    geom_errorbar(data = c, aes(x = Year, ymin = Count-1.96*SE_est, ymax = Count+1.96*SE_est), width = 0, linewidth = 1)+
+    geom_point(data = subset(c, is.na(SE)), aes(x = Year, y = Count), size = 5, shape=1) +
+    scale_x_continuous(limits=c(1965,2023), expand=c(0,0)) +  
+    scale_y_continuous(labels = comma, limits=c(0,max(b$N_q975)+0.1*max(b$N_q975))) +
+    scale_color_manual(values=rep("grey50",length(unique(fit_samples_colony$samp))), 
+                       guide = "none")+
+    ylab("Index of Abundance") +
+    xlab("Year") +
+    theme(axis.text.x=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank()) +
+    
+    facet_wrap(~Colony, ncol=1) 
+  
+  plot_list[[i]] <- p
+}
+plot_list[[3]] # Ok that's much better, not I just need to stack them all up!
+
+# now add the axis titles and text just to the plots that need them
+plot_list[[13]] <- plot_list[[13]] + ylab("Index of Abundance") + theme(axis.title.y=element_text())
+plot_list[[22]] <- plot_list[[22]] + xlab("Year") + theme(axis.title.x=element_text(), axis.text.x=element_text())
+plot_list[[21]] <- plot_list[[21]] + xlab("Year") + theme(axis.title.x=element_text(), axis.text.x=element_text())
+plot_list[[20]] <- plot_list[[20]] + xlab("Year") + theme(axis.title.x=element_text(), axis.text.x=element_text())
+
+p <- plot_grid(plotlist = plot_list, ncol = 3, align = "v")
+p
+
+# much better
+ggsave(filename="output/figures/trajectory_and_trend_plots/ATPU_trajectory_colony_all.years.png", 
+       plot=p, device="png", dpi=300, units="cm", width=30, height=40)
 
 
 # *regional----
