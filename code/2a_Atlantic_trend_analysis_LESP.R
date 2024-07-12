@@ -174,7 +174,7 @@ if (!file.exists("output/LESP_fitted.rds")){
               inits = NULL,
               n.iter =  550000,
               n.burnin = 50000,
-              n.thin = 2500,
+              n.thin = 2500, # could change this to 1500 to get 1000 posterior samples
               model.file = "code/Seabird_Model-no int.jags",
               n.chains = 3,
               parallel = TRUE)
