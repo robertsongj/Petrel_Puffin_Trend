@@ -1,6 +1,6 @@
 # Tue Feb 13 15:14:09 2024 ------------------------------
 
-# GJR stole (i.e., forked and branched) this repo from Dave Iles to make a ,ess
+# GJR stole (i.e., forked and branched) this repo from Dave Iles to make a mess
 # of things and see if he can get it to work
 
 # ------------------------------------------------
@@ -27,7 +27,7 @@ CustomTheme <- theme_update(legend.key = element_rect(colour = NA),
                             panel.grid.minor = element_line(colour = 'transparent'),
                             panel.border = element_rect(linetype = "solid",
                                                         colour = "black",
-                                                        size = 1, fill = NA),
+                                                        linewidth = 1, fill = NA),
                             axis.line = element_line(colour = "black"),
                             strip.text = element_text(size = 12, colour = "black"),
                             strip.background = element_rect(colour = "black",
@@ -51,11 +51,13 @@ names(spdat) <- tools::toTitleCase(names(spdat))
 
 names(spdat)[names(spdat)=="Sd"] <-  "SE"
 
-mycountry <- "Canada"
+mycountry <- "UK"
 
 spdat <- spdat[spdat$Country == mycountry,]
 
-spdat <- subset(spdat, Year >= 1970)
+# set start year at 1973
+
+spdat <- subset(spdat, Year >= 1973)
 
 colonies_to_include = spdat %>%
   group_by(Colony) %>%
@@ -69,6 +71,10 @@ colonies_to_include = subset(colonies_to_include, mean_count > 1000)
 spdat = subset(spdat, Colony %in% colonies_to_include$Colony)
 
 # Tables that link colony numbers to colony names
+
+# Mon Dec  2 14:18:15 2024 ------------------------------
+# set Gull as the reference
+# spdat$colony_numeric <- as.integer(relevel(factor(spdat$Colony), ref = "Gull Island" ))
 spdat$colony_numeric <- as.integer(factor(spdat$Colony))
 colony_name_table = unique(spdat[,c("Colony","colony_numeric")])
 
@@ -109,7 +115,7 @@ colony = spdat$colony_numeric
 ncolony <- max(colony)
 count <- round(spdat$Count) # Must be integer
 ncounts = length(count)
-C0prior <- 0 # approximate mean of exp(N), gets model closer to the intercept to start
+C0prior <- 0#log(4.2e5) # approximate mean of exp(N), gets model closer to the intercept to start
 
 # Use jagam to prepare basis functions
 nyearspred = length(1:ymax)
@@ -174,10 +180,10 @@ if (!file.exists("output/LESP_fitted.rds")){
   out <- jags(data = jags_data,
               parameters.to.save = parameters.to.save,
               inits = NULL,
-              n.iter =  550000,
-              n.burnin = 50000,
-              n.thin = 2500,
-              model.file = "code/Seabird_Model-no int.jags",
+              n.iter =  55000*10,
+              n.burnin = 5000*10,
+              n.thin = 250*10,
+              model.file = "code/Seabird_Model.jags",
               n.chains = 3,
               parallel = TRUE)
   
@@ -356,7 +362,7 @@ colony_trajectory_plot <- ggplot()+
 
 colony_trajectory_plot
 
-png(paste0("output/figures/trajectory_and_trend_plots/LESP_trajectory_colony.png"), width = 12, height = 6, units = "in", res = 600)
+png(paste0("output/figures/trajectory_and_trend_plots/UK_LESP_trajectory_colony.png"), width = 12, height = 6, units = "in", res = 600)
 print(colony_trajectory_plot)
 dev.off()
 
@@ -441,7 +447,7 @@ regional_trajectory_plot <- ggplot()+
 
 regional_trajectory_plot
 
-png(paste0("output/figures/trajectory_and_trend_plots/LESP_trajectory_regional.png"), width = 6, height = 4, units = "in", res = 600)
+png(paste0("output/figures/trajectory_and_trend_plots/UK_LESP_trajectory_regional.png"), width = 6, height = 4, units = "in", res = 600)
 print(regional_trajectory_plot)
 dev.off()
 
@@ -449,8 +455,8 @@ dev.off()
 # Calculate regional trend
 # ----------------------------------
 
-regional_indices_t_start <- subset(fit_samples_regional, Year == t_start)
-regional_indices_t_end <- subset(fit_samples_regional, Year == t_end)
+regional_indices_t_start <- subset(fit_samples_regional, Year == max(t_start, min(fit_samples_regional$Year)))
+regional_indices_t_end <- subset(fit_samples_regional, Year == min(t_end, max(fit_samples_regional$Year)))
 regional_trend_samples <- 100 * ((regional_indices_t_end$N_pred/regional_indices_t_start$N_pred)^(1/(t_end-t_start))-1)
 
 # Posterior median trend estimate (and 95% credible interval)
@@ -494,7 +500,7 @@ trend_violin_plot <- ggplot()+
   xlab("")+
   ylab("Trend (% change per year)")+
   ggtitle("Posterior estimate of\nregional population trend")+
-  coord_cartesian(ylim=c(-4,4))
+  coord_cartesian(ylim=c(min(-4, min(regional_trend_samples)),4))
 trend_violin_plot
 
 png(paste0("output/figures/trajectory_and_trend_plots/LESP_trend_violin.png"), width = 4, height = 4, units = "in", res = 600)
@@ -514,5 +520,6 @@ out$mean$lambda
 out$mean$ProcVar_sd
 hist(out$sims.list$ProcVar_sd)
 
-out$sims.list$population_index
+out$sims.list$population_index[,,2]
+
 mean(rgamma(1000,0.05, 0.005))
